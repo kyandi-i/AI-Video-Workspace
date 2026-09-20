@@ -84,3 +84,11 @@
 ## 下一步
 
 **等待用户确认后才进入 Phase 2（Project / Script / Scene / Shot）。**
+
+## 2026-09-20 资源路径整改
+
+按资源审计后的明确要求完成两项本地路径整改，未改业务代码、UI 或依赖：
+
+- Playwright 1.63.0 的 Chromium v1243、Headless Shell v1243、FFmpeg v1011、WinLdd v1007 已安装到 `D:\study\DO\DevCache\playwright`。`frontend/scripts/playwright-env.mjs` 统一 `npm test` / `npm run test:install`，Playwright 配置也设置 `PLAYWRIGHT_BROWSERS_PATH`。C 盘 `ms-playwright` 完整保留。
+- 旧 `C:\Users\Lenovo\AI-Video-Workspace` 通过 SQLite backup 和目录初始化复制到 `D:\AI-Video-Workspace`；之后使用已有 Workspace API 切换并初始化 D 盘数据库。两个已发现的 Bootstrap Config 文件均保存 `D:\AI-Video-Workspace`，旧 C 盘 Workspace 未删除。
+- 冷启动新端口验证 API 返回 D 盘 Workspace，SQLite integrity / Phase 1 测试和浏览器测试均通过。测试结束后没有业务请求写入旧 C 盘 Workspace；C 盘只保留旧副本和用户级 Bootstrap Config 元数据。

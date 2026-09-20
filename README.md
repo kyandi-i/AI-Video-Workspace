@@ -102,6 +102,12 @@ start.ps1            # Windows 启动入口
 - 开发模式可访问 <http://127.0.0.1:5173/__ui> 验收基础组件。该路由在生产构建中不可用。
 - 截图：[Dark](docs/screenshots/phase-1.5-dark.png)、[Light](docs/screenshots/phase-1.5-light.png)。[资源审计报告](docs/RESOURCE_AUDIT_2026-09-20.md) 为 UI 开发前的基线，资源变化见开发状态。
 
+## 本机资源路径
+
+- 当前业务 Workspace Root：`D:\AI-Video-Workspace`。启动配置仍由用户级 Bootstrap Config 管理，但两个 Windows 配置位置都已指向该 D 盘目录；原 `C:\Users\Lenovo\AI-Video-Workspace` 保留为迁移前副本，不再作为当前业务 Workspace 使用。
+- Playwright 浏览器：`D:\study\DO\DevCache\playwright`。`npm test` 和 `npm run test:install` 都通过项目级脚本固定该路径；`frontend/playwright.config.ts` 也为直接测试命令设置同一环境变量。
+- 重新安装当前 Chromium 时运行 `npm --prefix frontend run test:install`。本次未删除 C 盘既有 `ms-playwright`，因为其中可能包含其他项目使用的版本。
+
 ## 配置与数据
 
 可复制 `backend/.env.example` 为 `backend/.env`。环境变量前缀为 `AVW_`；相对工作空间路径始终相对于仓库根目录解析，不依赖启动目录。

@@ -1,6 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 import { resolve } from "node:path";
 
+// Keep this project's Playwright payload off the system drive. The npm wrapper
+// and direct `playwright test` invocations use the same setting.
+process.env.PLAYWRIGHT_BROWSERS_PATH = "D:\\study\\DO\\DevCache\\playwright";
+
 const dev = process.env.AVW_E2E_MODE === "dev";
 const python =
   process.platform === "win32"

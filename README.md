@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 1：Database + Alembic + Storage Infrastructure。** 已具备数据库、Workspace 初始化与切换、安全文件存储和基础 Repository。项目、资产、Prompt 等业务功能尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)，每次开发只推进一个 Phase。
+**当前完成 Phase 1.5：UI Foundation。** 在 Phase 1 数据库与安全存储之上，建立深浅色工作台和公共组件；项目、资产、Prompt 等业务功能尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)，每次开发只推进一个 Phase。
 
 ## 环境
 
@@ -92,7 +92,15 @@ scripts/start.py      # 本地启动和子进程清理
 start.ps1            # Windows 启动入口
 ```
 
-技术栈固定为 React / TypeScript / Vite / Tailwind CSS / shadcn/ui 与 FastAPI / SQLAlchemy / Alembic / Pydantic / SQLite。路由不直接执行 SQL、文件读写业务或 AI 请求。当前首页插画由 CSS 构成，不依赖外部图片、字体或网络请求。
+技术栈固定为 React / TypeScript / Vite / Tailwind CSS / shadcn/ui 与 FastAPI / SQLAlchemy / Alembic / Pydantic / SQLite。路由不直接执行 SQL、文件读写业务或 AI 请求。UI 图标统一为 lucide-react 命名导入的本地 SVG 组件，不依赖外部图片、字体、图标 API 或 CDN。
+
+## UI Foundation
+
+- 默认 Dark，Topbar 与 Settings 可切换 Light。浏览器 localStorage 只保存 `avw.ui.theme`；业务数据仍保存到 Workspace。
+- Dashboard 展示真实连接 / 存储状态及明确的空状态；没有虚构业务记录，也没有提前实现 CRUD。Settings 仅提供主题切换与只读工作空间信息。
+- 公共视觉规则、完整 Token 表和组件 API 见 [UI Foundation](docs/UI_FOUNDATION.md)。颜色统一维护于 `frontend/src/styles/tokens.css`，组件源码位于 `frontend/src/components/ui` 与 `components/common`。
+- 开发模式可访问 <http://127.0.0.1:5173/__ui> 验收基础组件。该路由在生产构建中不可用。
+- 截图：[Dark](docs/screenshots/phase-1.5-dark.png)、[Light](docs/screenshots/phase-1.5-light.png)。[资源审计报告](docs/RESOURCE_AUDIT_2026-09-20.md) 为 UI 开发前的基线，资源变化见开发状态。
 
 ## 配置与数据
 
@@ -195,7 +203,7 @@ npm test
 Remove-Item Env:AVW_E2E_MODE
 ```
 
-测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口。Playwright 使用仓库 `.workspace/e2e` 中的隔离配置与数据，不改变个人工作空间；pytest 使用临时目录。覆盖真实 API 连接、断线重试、未知页面返回、桌面截图和窄屏溢出。无需手动先启动测试服务。
+测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。Playwright 使用仓库 `.workspace/e2e` 中的隔离配置与数据，不改变个人工作空间；pytest 使用临时目录。覆盖真实 API、断线重试、主题持久化 / 存储受限 / 跨标签同步、只读详情与复制、未知页面返回、响应式布局、两套颜色对比度和截图；开发模式额外覆盖公共组件交互。无需手动先启动测试服务。
 
 ## 后续开发
 

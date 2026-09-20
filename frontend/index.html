@@ -1,9 +1,19 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f6f7f9" />
+    <meta name="theme-color" content="#111517" />
+    <script>
+      try {
+        const theme =
+          localStorage.getItem("avw.ui.theme") === "light" ? "light" : "dark";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      } catch {
+        document.documentElement.style.colorScheme = "dark";
+      }
+    </script>
     <meta name="description" content="本地优先的 AI 视频制作工作台" />
     <title>AI Video Workspace · 视频制作工作台</title>
   </head>

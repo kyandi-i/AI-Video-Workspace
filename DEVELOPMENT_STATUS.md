@@ -4,85 +4,83 @@
 
 ## 当前阶段
 
-**Phase 1 · Database + Alembic + Storage Infrastructure：已完成。**
+**Phase 1.5 · UI Foundation：已完成。** 用户明确确认“审计完成后立即执行 Phase 1.5”；现已完成资源审计、UI 基础与验收，停在本阶段，等待确认 Phase 2。
 
-本次只实现基础设施，未进入 Phase 2。后续必须等待用户确认。需求范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md) 和 [Phase 1 要求原文](docs/PHASE_1_SPEC.md)。[Phase 0 验收记录](docs/PHASE_0_STATUS.md) 已保留。
+需求和范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md) 与 [Phase 1.5 原文](docs/PHASE_1_5_SPEC.md)。历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)。
 
-## 实现内容与架构变化
+## 本阶段实现
 
-- `core/database.py`：按 Workspace 建立 Database 实例，包含 engine / SessionLocal；get_db 请求依赖、事务提交回滚、连接释放与外键约束。
-- `models/base.py`：UUID、UTC Timestamp、SoftDelete mixin 和 BaseModel。应用产生 UUID，SQLite 使用 SQLAlchemy Uuid 的便携存储，PostgreSQL 可使用原生 UUID。
-- `models/app_setting.py`：唯一基础设施表 app_settings，不包含项目领域模型或敏感凭据。
-- `repositories/base.py`：get / list / add / update / soft_delete / restore；默认隐藏软删除数据，Repository 只 flush。
-- `core/bootstrap.py`：仅保存 workspace_root 的用户级配置，临时文件写入后原子替换。解析 Windows APPDATA 重定向后的物理路径，避免跨磁盘替换错误。
-- `services/workspace.py`：路径验证、幂等目录初始化、迁移目标数据库、持久化切换与旧数据库释放。资源租约确保数据库与 Storage 在同一工作空间内完成操作；旧数据不搬迁、不删除。
-- `services/storage/`：StorageProvider、StorageObject、LocalStorageProvider；相对路径、UUID 文件名、原文件名、大小与 SHA-256；安全复制、读取、删除、移动和补偿上下文。
-- `core/paths.py`：路径穿越、Windows 盘符/ADS/保留名、符号链接、目录联接和根目录被替换的拦截。
-- `api/routes/settings.py`：最小 GET / PUT Workspace API；统一 AppError 与 400/404/409/422/500 响应。
-- 前端只更新阶段提示和真实存储初始化状态；没有添加业务页面或 CRUD。
-- 本地启动器保留开发/构建模式，并显式转发隐藏子进程日志。
-
-## Alembic 状态
-
-- 当前唯一 head：`0001_app_settings`。
-- 实际默认 Workspace 已迁移至该 head；数据库中仅有 app_settings 和 alembic_version。
-- 应用启动通过 Alembic 升级，不使用 create_all。
-- 独立测试数据库验证 upgrade → downgrade base → upgrade。
-- 在迁移目录副本内验证 revision --autogenerate 及新增测试 revision 的升降级。
-- alembic check 通过，Metadata 与当前 Schema 无差异。
-- UTC 自定义类型在新 revision 中渲染为稳定的 sa.DateTime，避免依赖未来变动的应用类型实现。
+- 默认 Dark；Topbar / Settings 切换 Light，`avw.ui.theme` 是唯一 localStorage UI 偏好。预渲染应用主题、存储受限降级、非法值回退、跨标签同步。
+- 统一 background / sidebar / panel / card 层级、弱边框、青绿色 Accent、紧凑排版与滚动条。完整 Token 值和 API 见 [UI Foundation](docs/UI_FOUNDATION.md)。
+- 重做 Sidebar / Topbar / 全宽 Main；保留六个导航名称，Settings 位于底部。尚无业务的导航禁用，不展示开发阶段标签。
+- Dashboard 删除营销 Hero、开发路线、Phase 卡片和虚构用户；展示真实服务/存储状态、项目/镜头/素材/活动的明确空状态。
+- Settings 只提供 UI 主题和只读 Workspace 元数据。DetailSheet 展示真实目录、数据库文件、初始化状态，并支持复制路径及 Toast。没有从 UI 写入或切换 Workspace。
+- 新增 WorkspacePanel、PageHeader、SectionHeader、EmptyState、EntityCard、MediaCard、DetailSheet；统一 Button、Card、Input、SearchInput、Textarea、Select、Checkbox、Switch、Badge、Tabs、Dialog、Sheet、DropdownMenu、Tooltip、Separator、ScrollArea、Skeleton、Toast。
+- 沿用 shadcn/ui 源码管理方式与 Radix primitives；只用 lucide-react 命名导入。没有远程图标、字体、图片或网络图标 API。
+- 开发专用 `/__ui` 验收入口覆盖基础组件；样例明确标注，不是业务数据，不出现在生产路由中。
+- 后端源码、API 契约、StorageProvider、Repository、Schema、迁移均未更改，没有新增业务功能。
 
 ## 验收结果
 
-| 类别 | 结果 |
+| 检查 | 结果 |
 | --- | --- |
-| Phase 0 后端回归 | 4/4 通过；健康检查和无业务表断言更新为 Phase 1 的初始化/基础设施语义，保留懒构造、SPA/API 分离和缺失构建提示 |
-| Database / Repository | 6/6 通过：升降级、autogenerate、UUID、UTC、软删除、恢复、回滚、唯一性和 PostgreSQL DDL 编译 |
-| Workspace | 12/12 通过：初始化、幂等、切换、重启、非法路径、损坏配置/数据库、配置写失败和进行中的事务 |
-| Storage / 路径 / Bootstrap 重定向 | 32/32 通过：独立副本、同名文件、读删移、19 组危险路径、Windows 目录联接、祖先目录替换、原子配置路径、部分写入清理和 DB 回滚补偿 |
-| Workspace API / Error Schema | 7/7 通过 |
-| pytest 合计 | **61/61 通过，无跳过** |
-| Playwright 构建模式 | **4/4 通过** |
-| Playwright Vite 开发模式 | **4/4 通过** |
-| TypeScript / Vite build / ESLint | 通过 |
-| Ruff / Ruff format | 通过 |
-| 实际默认配置启动 | 通过，已修复桌面环境 APPDATA 跨磁盘重定向问题 |
+| ESLint | 通过 |
+| TypeScript + Vite build | 通过 |
+| Playwright 构建模式 | **12/12 通过，无跳过** |
+| Playwright Vite 开发模式 | **14/14 通过，无跳过** |
+| pytest 全部后端回归 | **61/61 通过，无跳过** |
+| Ruff check / format | 通过，35 个文件格式符合要求 |
+| Alembic current | `0001_app_settings (head)` |
+| Alembic check | `No new upgrade operations detected` |
+| 实际默认 Workspace 服务 | `http://127.0.0.1:8765` 正常，storage_initialized=true |
+| 主题与状态 | 默认/保存/非法/受限存储/跨标签同步、服务断线/重试、独立 Workspace 读取错误通过 |
+| 交互 | 只读详情、复制反馈、焦点约束/返回、Esc、表单、Select、Tabs、Switch、Checkbox、三类 Toast、媒体选择与三种比例通过 |
+| 可读性 | 两种主题各 10 组关键文字 Token 对比度 ≥4.5:1，并人工检查截图 |
+| 布局 | 1920 / 1440 / 1280 / 1024 / 390px 无水平溢出；1920px Main 超过 1600px |
+| Local-first | 页面资源请求只访问本地；详情查看和复制没有 API 写操作；未增加业务 localStorage |
+| Git whitespace | `git diff --check` 通过 |
 
-pytest 使用独立临时配置和数据。Playwright 使用 `.workspace/e2e` 中的隔离配置和数据库，不修改个人 Workspace。Windows 联接安全测试实际执行，没有跳过。
+原 Phase 0 的真实连接、失败恢复、404 返回和视口检查已迁入 workspace 测试并更新为正式工具 UI 的语义；bootstrap 测试现在覆盖主题初始化和跨标签同步。不是继续断言被需求要求删除的营销内容。
 
-已在本机实际启动 `http://127.0.0.1:8765`，Workspace API 返回已初始化，健康检查返回 phase=1 和 storage_initialized=true。首次默认 Workspace 为 `C:\Users\Lenovo\AI-Video-Workspace`；后续以 Bootstrap Config 保存的选择为准。
+测试服务使用独立 `.workspace/e2e` 配置和数据库；pytest 的数据库/存储/迁移测试使用临时目录，保留升降级、autogenerate、UTC / UUID、事务和危险路径回归。浏览器测试最多 2 workers。两种测试启动方式均实际运行并自动退出。
+
+健康 API 的 `phase=1` 仍表示原后端基础设施阶段；UI Foundation 不改写已有 API 阶段字段。
+
+## 截图
+
+正式截图使用实际默认 Workspace，非虚构业务数据：
+
+- [Dark Dashboard](docs/screenshots/phase-1.5-dark.png)
+- [Light Dashboard](docs/screenshots/phase-1.5-light.png)
+- [DetailSheet](docs/screenshots/phase-1.5-detail.png)
+- [Dark 组件验收](docs/screenshots/phase-1.5-components-dark.png)
+- [Light 组件验收](docs/screenshots/phase-1.5-components-light.png)
+
+## 资源与依赖
+
+[只读资源审计](docs/RESOURCE_AUDIT_2026-09-20.md) 记录 UI 开发前的基线、C/D 盘归因、RAM、依赖和图标。审计后没有执行缓存清理、目录迁移、原有依赖卸载或浏览器重新下载。
+
+| 项目 | UI 前 | UI 后测量 |
+| --- | ---: | ---: |
+| frontend/node_modules | 184.90 MiB | 189.30 MiB，增加约 4.40 MiB |
+| frontend/dist | 0.482 MiB | 0.632 MiB |
+| 生产 JS | 484.07 kB / gzip 151.49 kB | 634.70 kB / gzip 198.46 kB |
+| 生产 CSS | 20.86 kB / gzip 5.67 kB | 26.90 kB / gzip 6.31 kB |
+| backend/.venv | 69.64 MiB | 69.64 MiB |
+
+上表 bundle 单位 kB 为十进制，与 Vite 输出一致；磁盘 MiB 为二进制。UI 后工程文件内容快照约 260.89 MiB，测量在最终文档和部分验收截图落盘前，最终 Git 对象/截图会带来少量额外变化；未把逻辑大小冒充 NTFS 分配空间。审计中的 C 盘与 RAM 数字是开发前基线，不冒充新界面的重新测量。
+
+新增 9 个 Radix 直接依赖与 Sonner，共安装 49 个依赖包；安装时 npm audit 为 0 vulnerabilities。没有新增图标库、图表库、动画库或重型 UI Framework。未接入业务的组件由开发验收页消费，生产构建移除开发模块及只供它使用的 JS。
 
 ## 已知限制
 
-- 不实现 Project / Script / Scene / Shot 等业务 CRUD、资产库、AI、分镜、视频结果或导出；没有完整 Settings UI，可通过 Swagger 或 Workspace API 使用基础切换功能。
-- 缩略图接口已定义，当前明确 NotImplemented，留到资产导入阶段。
-- 仅支持单进程本地服务；资源租约不协调其他独立服务进程或手工修改磁盘的程序。
-- 文件补偿处理普通异常，不提供跨数据库/文件系统的崩溃原子事务。强制退出可能留下未引用文件或临时文件，后续资产阶段再处理引用清理。
-- POSIX 的拒绝覆盖发布依赖同文件系统硬链接；Windows 使用原子 rename。当前实际运行验收平台为 Windows。
-- PostgreSQL 仅验证 DDL 可编译，未连接真实 PostgreSQL 服务；MVP 仍使用 SQLite。
-- 上游 Starlette 的 httpx/AnyIO 弃用提示和 Zod 打包注释提示仍存在，不影响本次验收。
+- 本阶段不包含 Project / Asset / Character / Prompt 业务及创建操作。空状态不代表这些模块已实现。
+- 完整移动端体验不在当前范围；普通笔记本与桌面优先。
+- Vite 单 JS chunk 约 634.70 kB，仍有大于 500 kB 的性能提示。当前 gzip 约 198.46 kB；可在后续业务路由出现时按页面拆包，当前未提高提示阈值或引入额外框架。
+- 沿用的 Zod PURE 注释提示，以及 Starlette/httpx 和 AnyIO 弃用提示不阻止构建/测试，本阶段未为这些提示升级后端依赖。
+- 对比度测试覆盖核心 token，不是完整无障碍认证。
+- Phase 1 的单进程服务、文件补偿与缩略图能力边界继续适用，见历史验收记录。
 
-## 下一阶段建议
+## 下一步
 
-版本控制已建立：本地 Git 仓库使用 `main` 分支，以已完成的 Phase 0 + Phase 1 为首次基线。源码、测试、需求和锁文件纳入管理；Workspace、数据库、环境配置、依赖和构建产物通过忽略规则排除。未配置远程仓库。本次仅建立版本控制，不推进开发阶段。
-
-**等待用户确认后，进入 Phase 2：Project / Script / Scene / Shot。**
-
-以本阶段的 UUID BaseModel、Repository、数据库事务和 Workspace 资源边界为基础，增加项目制作层级、迁移和相应 CRUD；底层保留 ScriptNode 树结构。下一阶段的具体范围以用户确认后的计划为准。
-
-## 阶段总览
-
-| Phase | 内容 | 状态 |
-| --- | --- | --- |
-| 0 | 项目初始化 | 已完成 |
-| 1 | DB + Alembic + Storage | 已完成 |
-| 2 | Project / Script / Scene / Shot | 等待确认 |
-| 3 | Asset Library | 待开始 |
-| 4 | Character / CharacterState | 待开始 |
-| 5 | Shot Workspace | 待开始 |
-| 6 | Prompt Template | 待开始 |
-| 7 | AI Prompt Generation | 待开始 |
-| 8 | Prompt Versioning | 待开始 |
-| 9 | Storyboard Workflow | 待开始 |
-| 10 | Video Result | 待开始 |
-| 11 | Export / Recycle Bin / UX | 待开始 |
+**等待用户确认后才进入 Phase 2（Project / Script / Scene / Shot）。**

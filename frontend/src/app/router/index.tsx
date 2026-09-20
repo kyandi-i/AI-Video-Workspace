@@ -2,12 +2,17 @@ import { createBrowserRouter, Link } from "react-router-dom";
 import { AppShell } from "@/components/layout/app-shell";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { Button } from "@/components/ui/button";
+import { SettingsPage } from "@/features/settings/settings-page";
 
 export const router = createBrowserRouter([
+  ...(import.meta.env.DEV
+    ? [{ path: "/__ui", lazy: () => import("@/dev/ui-preview") }]
+    : []),
   {
     element: <AppShell />,
     children: [
       { path: "/", element: <DashboardPage /> },
+      { path: "/settings", element: <SettingsPage /> },
       {
         path: "*",
         element: (

@@ -8,18 +8,37 @@ import {
   Settings2,
   HardDrive,
   ChevronRight,
+  Moon,
+  Sun,
+  CircleHelp,
 } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useTheme } from "@/lib/theme";
+import { useHealth } from "@/features/dashboard/use-health";
 
-const upcoming = [
-  { label: "项目", icon: FolderOpen, phase: 2 },
-  { label: "资产库", icon: Images, phase: 3 },
-  { label: "角色", icon: UsersRound, phase: 4 },
-  { label: "Prompt 模板", icon: FileText, phase: 6 },
-  { label: "设置", icon: Settings2, phase: 1 },
+const navigation = [
+  { label: "Projects", icon: FolderOpen },
+  { label: "Asset Library", icon: Images },
+  { label: "Characters", icon: UsersRound },
+  { label: "Prompt Templates", icon: FileText },
 ];
 
 export function AppShell() {
+  const { theme, setTheme } = useTheme();
+  const health = useHealth();
+  const location = useLocation();
+  const page =
+    location.pathname === "/"
+      ? "Overview"
+      : location.pathname === "/settings"
+        ? "Settings"
+        : "Workspace";
   return (
     <div className="app-shell">
       <a href="#main" className="skip-link">
@@ -27,73 +46,112 @@ export function AppShell() {
       </a>
       <aside className="sidebar">
         <NavLink to="/" className="brand" aria-label="AI Video Workspace 首页">
-          <span className="brand-icon">
-            <Clapperboard size={23} />
+          <span className="brand-mark">
+            <Clapperboard size={21} />
           </span>
-          <span>
-            AI Video<span className="brand-subtitle">WORKSPACE</span>
-          </span>
-        </NavLink>
-        <div className="workspace-switch">
-          <span className="workspace-avatar">L</span>
           <div>
-            本地工作空间<small>个人创作 · Local-first</small>
+            <strong>AI Video</strong>
+            <span>WORKSPACE</span>
           </div>
-          <ChevronRight size={14} />
+        </NavLink>
+        <div className="workspace-identity">
+          <span className="workspace-symbol">
+            <HardDrive size={16} />
+          </span>
+          <div>
+            <strong>Local workspace</strong>
+            <span>个人工作空间</span>
+          </div>
         </div>
-        <p className="nav-caption">工作台</p>
+        <span className="nav-label">WORKSPACE</span>
         <nav aria-label="主导航">
-          <NavLink to="/" end className="nav-item active">
-            <LayoutDashboard size={18} />
-            <span>概览</span>
-            <span className="active-dot" />
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          >
+            <LayoutDashboard size={17} />
+            <span>Dashboard</span>
           </NavLink>
-          {upcoming.map(({ label, icon: Icon, phase }) => (
+          {navigation.map(({ label, icon: Icon }) => (
             <button
-              className="nav-item"
               key={label}
+              className="nav-item"
               disabled
-              title={
-                phase === 1
-                  ? "Workspace API 已提供，设置页面后续开放"
-                  : `将在 Phase ${phase} 开始实现`
-              }
+              aria-label={label}
             >
-              <Icon size={18} />
+              <Icon size={17} />
               <span>{label}</span>
-              <small>待开发</small>
             </button>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="local-notice">
-            <HardDrive size={18} />
-            <div>
-              创作，留在本地<small>你的素材与数据由你掌握</small>
-            </div>
-          </div>
-          <div className="version-line">
-            <span>MVP v0.1</span>
-            <span>Phase 1</span>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          >
+            <Settings2 size={17} />
+            <span>Settings</span>
+          </NavLink>
+          <div className="sidebar-footnote">
+            <HardDrive size={13} />
+            <span>Local-first · 你的数据留在本机</span>
           </div>
         </div>
       </aside>
       <div className="main-column">
         <header className="topbar">
-          <div>
-            工作空间 <ChevronRight size={14} />
-            <strong>概览</strong>
+          <div className="breadcrumb">
+            <span>Workspace</span>
+            <ChevronRight size={13} />
+            <strong>{page}</strong>
           </div>
-          <span className="local-badge">
-            <span /> 本地运行
-          </span>
+          <div className="topbar-actions">
+            <span
+              className={`connection-indicator ${health.isSuccess && !health.isError ? "is-online" : "is-offline"}`}
+              role="status"
+            >
+              <i />
+              {health.isPending
+                ? "连接中"
+                : health.isError
+                  ? "连接中断"
+                  : "Local · 已连接"}
+            </span>
+            <span className="topbar-divider" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={
+                    theme === "dark" ? "切换到浅色模式" : "切换到深色模式"
+                  }
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                >
+                  {theme === "dark" ? <Sun /> : <Moon />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </TooltipContent>
+            </Tooltip>
+            <Button variant="ghost" size="icon" asChild>
+              <a href="/settings" aria-label="工作空间设置">
+                <CircleHelp />
+              </a>
+            </Button>
+          </div>
         </header>
         <main id="main" tabIndex={-1}>
           <Outlet />
         </main>
-        <footer className="page-footer">
+        <footer className="workspace-footer">
           <span>AI VIDEO WORKSPACE</span>
-          <span>从一个想法，到每一个镜头。</span>
+          <span>
+            LOCAL STORAGE <span className="footer-dot">·</span> PRIVATE BY
+            DEFAULT
+          </span>
         </footer>
       </div>
     </div>

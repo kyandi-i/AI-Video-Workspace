@@ -1,6 +1,6 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 1.5 — UI Foundation，已完成，等待确认下一阶段。**
+当前开发阶段：**Phase 2 — Project / Script / Scene / Shot，已完成。**
 
 ## 依据
 
@@ -9,15 +9,16 @@
 3. [Phase 1.5 详细要求](docs/PHASE_1_5_SPEC.md)：用户提供的 UI Foundation 原文。
 4. [开发状态](DEVELOPMENT_STATUS.md)：当前能力与验收记录；[Phase 0](docs/PHASE_0_STATUS.md) / [Phase 1](docs/PHASE_1_STATUS.md) 已归档。
 5. [资源审计](docs/RESOURCE_AUDIT_2026-09-20.md)：Phase 1.5 前只读基线。用户明确确认“审计完成后立即执行 Phase 1.5”。
+6. [Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)：用户本轮授权的项目层级业务闭环与验收映射；[Phase 1.5 历史状态](docs/PHASE_1_5_STATUS.md)。
 
-## Phase 1.5 范围
+## Phase 2 范围
 
-- 深浅色 Design Tokens，默认 Dark、localStorage 仅保存 UI Theme Preference。
-- Sidebar + Topbar + 全宽 Workspace，工具化 Dashboard 与真实本地状态。
-- shadcn/ui 风格源码组件、Radix 行为、Lucide 单一图标库、Sonner 反馈。
-- WorkspacePanel / PageHeader / SectionHeader / EmptyState / EntityCard / MediaCard / DetailSheet。
-- 只读 Workspace 信息及主题设置；组件交互、可读性、截图、前后端与迁移回归。
+- Project → Script → ScriptNode(SCENE) → Scene → Shot，五张 UUID / 时间戳 / 软删除表与正式迁移。
+- Route → Service → Repository；场景 / 节点事务一致性、项目关系校验、镜头编号唯一性与连续排序。
+- 项目列表、Overview、剧本树、场景列表、镜头搜索与筛选、基础镜头详情。
+- 沿用 Dark / Light、紧凑工作台、Dialog、Skeleton、Toast、TanStack Query；只刷新受影响的数据。
+- 数据库 / Service / API / 浏览器验证、迁移回退回升、文档与本地 Git 提交。
 
-不实现 Project / Asset CRUD、Prompt、AI、分镜、视频版本或导出，不改写后端业务架构。没有执行缓存清理、目录迁移或依赖卸载。
+不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-完成本阶段后暂停。**Phase 2 必须再次获得用户确认，不自动进入。**
+完成本阶段后暂停。**Phase 3 必须再次获得用户确认，不自动进入。**

@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 1.5：UI Foundation。** 在 Phase 1 数据库与安全存储之上，建立深浅色工作台和公共组件；项目、资产、Prompt 等业务功能尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)，每次开发只推进一个 Phase。
+**当前完成 Phase 2：Project / Script / Scene / Shot。** 已可在深浅色工作台中创建项目、剧本、场景与镜头，编辑、软删除、排序、搜索与筛选，数据保存在本地 SQLite。Asset / Character / Prompt / Storyboard / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)，每次开发只推进一个 Phase。
 
 ## 环境
 
@@ -72,20 +72,20 @@ npm --prefix frontend run dev
 ```text
 backend/
   app/
-    api/routes/       # 健康检查与最小 Workspace API
+    api/routes/       # 健康检查、Workspace 与项目层级 API
     core/             # Bootstrap、数据库实例、统一异常与路径校验
-    models/           # UUID/UTC/SoftDelete BaseModel、app_settings
+    models/           # UUID/UTC/SoftDelete BaseModel、设置与五张业务表
     schemas/          # Pydantic 请求/响应契约
-    repositories/     # BaseRepository，默认忽略软删除记录
-    services/         # WorkspaceService；storage/ 中为存储抽象与本地实现
-    migrations/       # 0001_app_settings，支持升降级和自动生成
+    repositories/     # BaseRepository + 各业务 Repository，默认忽略软删除记录
+    services/         # Project/Script/Scene/Shot 与 Workspace Service；storage/ 抽象
+    migrations/       # 0001_app_settings → 0002_core_workflow
   tests/
 frontend/
   src/
     app/              # Router、Query Provider
     api/              # API 客户端
     components/       # 布局和 shadcn/ui 基础组件
-    features/         # 按业务模块组织，目前只有 dashboard
+    features/         # dashboard/settings/projects/scripts/scenes/shots
     lib/
   tests/              # Playwright 浏览器验收
 scripts/start.py      # 本地启动和子进程清理
@@ -94,13 +94,42 @@ start.ps1            # Windows 启动入口
 
 技术栈固定为 React / TypeScript / Vite / Tailwind CSS / shadcn/ui 与 FastAPI / SQLAlchemy / Alembic / Pydantic / SQLite。路由不直接执行 SQL、文件读写业务或 AI 请求。UI 图标统一为 lucide-react 命名导入的本地 SVG 组件，不依赖外部图片、字体、图标 API 或 CDN。
 
+## 项目制作流程
+
+1. 打开侧栏 **Projects**，创建项目并打开。
+2. 在 **Script** 创建剧本，再添加场景；场景中可维护描述、固定约束与负面约束。
+3. 在场景中创建镜头，填写项目内唯一的镜头编号、标题、时长、状态与创作要求。
+4. 用上移 / 下移调整场景内镜头顺序；到 **Shots** 按编号或标题搜索，组合场景、状态筛选。
+5. 点击镜头打开基础详情并编辑。**Scenes** 可独立查看场景并展开镜头；**Overview** 显示真实数量。
+
+全部创建、编辑和删除均写入本地数据库。业务数据不进入 localStorage。删除必须确认，Project / Script / Scene 会联动软删除后代；没有永久删除接口或 Recycle Bin 页面。Scene 删除同步软删除 ScriptNode 与 Shot。镜头编号区分大小写，软删除后仍保留唯一占用，可通过恢复接口恢复原记录。
+
+Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title / description 留空。场景顺序仅在 ScriptNode 维护，API 中的 Scene.order_index 是投影。Shot 顺序由后端分配，删除和移动后连续，恢复的单个镜头追加到末尾。
+
+## Core Workflow API
+
+完整输入、输出契约见本地 `/api/docs`。Create / Update / Read schema 分离；PATCH 省略字段表示保留原值，显式 null 和未知字段返回 422。
+
+| 资源 | 列表 / 创建 | 详情 / 更新 / 删除 |
+| --- | --- | --- |
+| Projects | `GET/POST /api/projects` | `GET/PATCH/DELETE /api/projects/{id}` |
+| Scripts | `GET/POST /api/projects/{project_id}/scripts` | `GET/PATCH/DELETE /api/scripts/{id}` |
+| Scenes | `GET/POST /api/projects/{project_id}/scenes` | `GET/PATCH/DELETE /api/scenes/{id}` |
+| Shots | `GET/POST /api/scenes/{scene_id}/shots` | `GET/PATCH/DELETE /api/shots/{id}` |
+
+- Scene 创建传入 `script_id`；Shot 创建传入 `project_id`。Service 校验它们与 URL 上的父级关系。
+- `GET /api/projects/{id}/shots` 支持 `search`、`scene_id`、`status`；`GET /api/projects/{id}/stats` 返回 scripts / scenes / shots 实际数量。
+- `POST /api/shots/{id}/move`：`{"direction":"up"}` 或 `{"direction":"down"}`，返回场景内最终顺序，边界移动不改变顺序。
+- 四类资源列表、详情均支持 `include_deleted=true`，默认隐藏软删除记录；`POST /api/{projects|scripts|scenes|shots}/{id}/restore` 恢复记录。恢复后代前必须先恢复父级；恢复父级只恢复同一次级联删除的后代，不恢复此前单独删除的记录。
+- 错误保持 `{code,message,details}`：不存在为 404，镜头编号冲突为 409，跨项目关系为 400，输入验证为 422。
+
 ## UI Foundation
 
 - 默认 Dark，Topbar 与 Settings 可切换 Light。浏览器 localStorage 只保存 `avw.ui.theme`；业务数据仍保存到 Workspace。
-- Dashboard 展示真实连接 / 存储状态及明确的空状态；没有虚构业务记录，也没有提前实现 CRUD。Settings 仅提供主题切换与只读工作空间信息。
+- Dashboard 展示真实连接、存储状态和最近更新项目；Projects 进入实际项目业务。Settings 提供主题切换与只读工作空间信息。
 - 公共视觉规则、完整 Token 表和组件 API 见 [UI Foundation](docs/UI_FOUNDATION.md)。颜色统一维护于 `frontend/src/styles/tokens.css`，组件源码位于 `frontend/src/components/ui` 与 `components/common`。
 - 开发模式可访问 <http://127.0.0.1:5173/__ui> 验收基础组件。该路由在生产构建中不可用。
-- 截图：[Dark](docs/screenshots/phase-1.5-dark.png)、[Light](docs/screenshots/phase-1.5-light.png)。[资源审计报告](docs/RESOURCE_AUDIT_2026-09-20.md) 为 UI 开发前的基线，资源变化见开发状态。
+- Phase 2 截图（独立 E2E 测试项目）：[Dark Script](docs/screenshots/phase-2-script-dark.png)、[Light Shots](docs/screenshots/phase-2-shots-light.png)。历史 UI Foundation：[Dark](docs/screenshots/phase-1.5-dark.png)、[Light](docs/screenshots/phase-1.5-light.png)。[资源审计报告](docs/RESOURCE_AUDIT_2026-09-20.md) 为 UI 开发前的基线，资源变化见开发状态。
 
 ## 本机资源路径
 
@@ -134,7 +163,7 @@ Bootstrap Config 默认位于 Windows `%APPDATA%/AI-Video-Workspace/config.json`
 
 ## Workspace API
 
-本阶段提供 API 验收入口，设置产品页面尚未实现。可在本地 Swagger 文档中调用，或使用 PowerShell：
+Workspace 切换仍仅提供 API 入口；Settings 页面可查看工作空间与切换主题。可在本地 Swagger 文档中调用，或使用 PowerShell：
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8765/api/settings/workspace
@@ -184,7 +213,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini heads
 uv run --locked --project backend alembic -c backend/alembic.ini upgrade head --sql
 ```
 
-当前 head 是 `0001_app_settings`，只创建基础设施表。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
+当前 head 是 `0002_core_workflow`，新增 projects / scripts / script_nodes / scenes / shots，保留原 app_settings。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
 
 常用迁移命令（项目根目录；操作的是 bootstrap 当前选中的工作空间）：
 
@@ -195,13 +224,13 @@ uv run --locked --project backend alembic -c backend/alembic.ini check
 uv run --locked --project backend alembic -c backend/alembic.ini revision --autogenerate -m "describe schema change"
 ```
 
-`downgrade base` 会删除设置表，只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
+`downgrade 0001_app_settings` 会删除五张业务表；`downgrade base` 还会删除设置表。回退只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
 
 浏览器测试需先构建前端，并首次安装 Chromium：
 
 ```powershell
 Set-Location frontend
-npx playwright install chromium
+npm run test:install
 npm test
 # 验证 Vite 开发代理与开发启动入口
 $env:AVW_E2E_MODE = 'dev'
@@ -209,7 +238,7 @@ npm test
 Remove-Item Env:AVW_E2E_MODE
 ```
 
-测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。Playwright 使用仓库 `.workspace/e2e` 中的隔离配置与数据，不改变个人工作空间；pytest 使用临时目录。覆盖真实 API、断线重试、主题持久化 / 存储受限 / 跨标签同步、只读详情与复制、未知页面返回、响应式布局、两套颜色对比度和截图；开发模式额外覆盖公共组件交互。无需手动先启动测试服务。
+测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。Playwright 使用仓库 `.workspace/e2e` 中的隔离配置与数据，不改变个人工作空间；pytest 使用临时目录。覆盖真实 API、断线重试、主题持久化 / 存储受限 / 跨标签同步、只读详情与复制、未知页面返回、响应式布局、两套颜色对比度和截图；开发模式额外覆盖公共组件交互。无需手动先启动测试服务。Phase 2 增加两种主题下的完整业务 CRUD、顺序调整、筛选、删除确认、刷新持久化、表单验证 / pending / API 冲突与 404 测试。
 
 ## 后续开发
 
@@ -220,7 +249,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md)。下一阶段建议为 Phase 2（Project / Script / Scene / Shot），必须等待用户确认后才开始。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 2 已完成；Phase 3（Asset Library）必须等待用户确认后才开始。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

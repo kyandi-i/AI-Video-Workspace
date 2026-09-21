@@ -18,7 +18,7 @@ def test_construction_is_lazy_and_lifespan_initializes_workspace(tmp_path):
             "status": "ok",
             "app": "ai-video-workspace",
             "version": "0.1.0",
-            "phase": 1,
+            "phase": 2,
             "storage_initialized": True,
         }
     assert (root / "data" / "workspace.db").is_file()
@@ -48,7 +48,14 @@ def test_missing_frontend_has_actionable_error(tmp_path):
         assert client.get("/api/health").status_code == 200
 
 
-def test_infrastructure_has_no_business_schema():
+def test_phase2_has_only_authorized_business_schema():
     config = Config(str(REPOSITORY_ROOT / "backend" / "alembic.ini"))
-    assert ScriptDirectory.from_config(config).get_heads() == ["0001_app_settings"]
-    assert set(Base.metadata.tables) == {"app_settings"}
+    assert ScriptDirectory.from_config(config).get_heads() == ["0002_core_workflow"]
+    assert set(Base.metadata.tables) == {
+        "app_settings",
+        "projects",
+        "scripts",
+        "script_nodes",
+        "scenes",
+        "shots",
+    }

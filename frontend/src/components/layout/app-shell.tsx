@@ -23,7 +23,6 @@ import { useTheme } from "@/lib/theme";
 import { useHealth } from "@/features/dashboard/use-health";
 
 const navigation = [
-  { label: "Projects", icon: FolderOpen },
   { label: "Asset Library", icon: Images },
   { label: "Characters", icon: UsersRound },
   { label: "Prompt Templates", icon: FileText },
@@ -38,7 +37,11 @@ export function AppShell() {
       ? "Overview"
       : location.pathname === "/settings"
         ? "Settings"
-        : "Workspace";
+        : location.pathname.startsWith("/projects")
+          ? "Projects"
+          : location.pathname.startsWith("/shots/")
+            ? "Shot Detail"
+            : "Workspace";
   return (
     <div className="app-shell">
       <a href="#main" className="skip-link">
@@ -72,6 +75,13 @@ export function AppShell() {
           >
             <LayoutDashboard size={17} />
             <span>Dashboard</span>
+          </NavLink>
+          <NavLink
+            to="/projects"
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          >
+            <FolderOpen size={17} />
+            <span>Projects</span>
           </NavLink>
           {navigation.map(({ label, icon: Icon }) => (
             <button

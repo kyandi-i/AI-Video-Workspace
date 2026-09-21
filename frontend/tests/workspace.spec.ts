@@ -19,9 +19,9 @@ test("real local services, honest empty states, and local SVG icons", async ({
   ).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("Local · 已连接");
   await expect(
-    page.getByRole("button", { name: "Projects", exact: true }),
-  ).toBeDisabled();
-  await expect(page.getByText("尚无可展示的项目")).toBeVisible();
+    page.getByRole("link", { name: "Projects", exact: true }),
+  ).toHaveAttribute("href", "/projects");
+  await expect(page.getByRole("heading", { name: "最近项目" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(
     /Phase|待开发|FastAPI v|每个好故事/,
   );

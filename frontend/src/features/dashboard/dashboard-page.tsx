@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useProjects } from "@/features/projects/hooks";
+import { QueryState } from "@/components/common/query-state";
 import {
   Activity,
   ArrowUpRight,
@@ -30,6 +33,7 @@ import { useWorkspace } from "@/features/settings/use-workspace";
 import { useHealth } from "./use-health";
 
 export function DashboardPage() {
+  const projects = useProjects();
   const health = useHealth();
   const workspace = useWorkspace();
   const [details, setDetails] = useState(false);
@@ -138,22 +142,43 @@ export function DashboardPage() {
           >
             <Tabs defaultValue="recent">
               <TabsList aria-label="项目显示范围">
-                <TabsTrigger value="recent">最近访问</TabsTrigger>
+                <TabsTrigger value="recent">最近更新</TabsTrigger>
                 <TabsTrigger value="all">全部项目</TabsTrigger>
               </TabsList>
               <TabsContent value="recent">
-                <EmptyState
-                  icon={FolderOpen}
-                  title="尚无可展示的项目"
-                  description="项目记录会集中显示在这里。"
-                />
+                {projects.isPending || projects.isError ? (
+                  <QueryState queries={[projects]} />
+                ) : projects.data.length ? (
+                  <div className="dashboard-projects">
+                    {[...projects.data]
+                      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+                      .slice(0, 5)
+                      .map((project) => (
+                        <Link key={project.id} to={`/projects/${project.id}`}>
+                          <FolderOpen size={16} />
+                          <strong>{project.name}</strong>
+                          <Badge>{project.status}</Badge>
+                          <ArrowUpRight size={14} />
+                        </Link>
+                      ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={FolderOpen}
+                    title="尚无可展示的项目"
+                    description="创建项目，开始组织剧本与镜头。"
+                    action={
+                      <Button asChild>
+                        <Link to="/projects">打开 Projects</Link>
+                      </Button>
+                    }
+                  />
+                )}
               </TabsContent>
               <TabsContent value="all">
-                <EmptyState
-                  icon={FolderOpen}
-                  title="尚无项目列表"
-                  description="项目与制作内容将在此统一组织。"
-                />
+                <Button asChild variant="secondary">
+                  <Link to="/projects">查看全部项目</Link>
+                </Button>
               </TabsContent>
             </Tabs>
           </WorkspacePanel>
@@ -162,8 +187,13 @@ export function DashboardPage() {
               <EmptyState
                 compact
                 icon={ScanLine}
-                title="暂无镜头记录"
-                description="镜头的制作状态将在这里显示。"
+                title="按项目查看镜头"
+                description="打开项目中的 Shots，查看、筛选和编辑镜头。"
+                action={
+                  <Button asChild variant="secondary" size="sm">
+                    <Link to="/projects">选择项目</Link>
+                  </Button>
+                }
               />
             </WorkspacePanel>
             <WorkspacePanel title="最近素材" metadata="Assets">

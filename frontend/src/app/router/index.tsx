@@ -14,6 +14,33 @@ export const router = createBrowserRouter([
       { path: "/", element: <DashboardPage /> },
       { path: "/settings", element: <SettingsPage /> },
       {
+        path: "/projects",
+        lazy: () => import("@/features/projects/projects-page"),
+      },
+      {
+        path: "/projects/:projectId",
+        lazy: () => import("@/features/projects/project-layout"),
+        children: [
+          {
+            index: true,
+            lazy: () => import("@/features/projects/project-overview"),
+          },
+          {
+            path: "script",
+            lazy: () => import("@/features/scripts/script-page"),
+          },
+          {
+            path: "scenes",
+            lazy: () => import("@/features/scenes/scenes-page"),
+          },
+          { path: "shots", lazy: () => import("@/features/shots/shots-page") },
+        ],
+      },
+      {
+        path: "/shots/:shotId",
+        lazy: () => import("@/features/shots/shot-detail"),
+      },
+      {
         path: "*",
         element: (
           <div className="not-found">

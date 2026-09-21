@@ -34,8 +34,9 @@ export function DialogFooter({ className, ...props }: ComponentProps<"div">) {
 export function DialogContent({
   className,
   children,
+  closeDisabled = false,
   ...props
-}: ComponentProps<typeof Primitive.Content>) {
+}: ComponentProps<typeof Primitive.Content> & { closeDisabled?: boolean }) {
   return (
     <Primitive.Portal>
       <Primitive.Overlay className="ui-overlay" />
@@ -44,6 +45,7 @@ export function DialogContent({
         <Primitive.Close
           className="ui-button button-ghost button-icon dialog-close"
           aria-label="关闭"
+          disabled={closeDisabled}
         >
           <X size={16} />
         </Primitive.Close>

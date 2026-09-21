@@ -1,94 +1,78 @@
 # 开发状态
 
-更新日期：2026-09-20
+更新日期：2026-09-21
 
 ## 当前阶段
 
-**Phase 1.5 · UI Foundation：已完成。** 用户明确确认“审计完成后立即执行 Phase 1.5”；现已完成资源审计、UI 基础与验收，停在本阶段，等待确认 Phase 2。
+**Phase 2 · Project / Script / Scene / Shot：已完成。** 本轮用户明确授权 Phase 2；实现止于项目层级核心工作流。Phase 3 尚未开始。
 
-需求和范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md) 与 [Phase 1.5 原文](docs/PHASE_1_5_SPEC.md)。历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)。
+依据：[计划索引](PROJECT_PLAN.md)、[Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)、[MVP v0.1 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)。
 
 ## 本阶段实现
 
-- 默认 Dark；Topbar / Settings 切换 Light，`avw.ui.theme` 是唯一 localStorage UI 偏好。预渲染应用主题、存储受限降级、非法值回退、跨标签同步。
-- 统一 background / sidebar / panel / card 层级、弱边框、青绿色 Accent、紧凑排版与滚动条。完整 Token 值和 API 见 [UI Foundation](docs/UI_FOUNDATION.md)。
-- 重做 Sidebar / Topbar / 全宽 Main；保留六个导航名称，Settings 位于底部。尚无业务的导航禁用，不展示开发阶段标签。
-- Dashboard 删除营销 Hero、开发路线、Phase 卡片和虚构用户；展示真实服务/存储状态、项目/镜头/素材/活动的明确空状态。
-- Settings 只提供 UI 主题和只读 Workspace 元数据。DetailSheet 展示真实目录、数据库文件、初始化状态，并支持复制路径及 Toast。没有从 UI 写入或切换 Workspace。
-- 新增 WorkspacePanel、PageHeader、SectionHeader、EmptyState、EntityCard、MediaCard、DetailSheet；统一 Button、Card、Input、SearchInput、Textarea、Select、Checkbox、Switch、Badge、Tabs、Dialog、Sheet、DropdownMenu、Tooltip、Separator、ScrollArea、Skeleton、Toast。
-- 沿用 shadcn/ui 源码管理方式与 Radix primitives；只用 lucide-react 命名导入。没有远程图标、字体、图片或网络图标 API。
-- 开发专用 `/__ui` 验收入口覆盖基础组件；样例明确标注，不是业务数据，不出现在生产路由中。
-- 后端源码、API 契约、StorageProvider、Repository、Schema、迁移均未更改，没有新增业务功能。
+- 新增 projects / scripts / script_nodes / scenes / shots，全部沿用 UUIDMixin、TimestampMixin、SoftDeleteMixin；正式迁移 `0002_core_workflow`，保留 app_settings。
+- 五个 Repository 与四个业务 Service；Route 只解析请求并调用 Service。SQLite / Local-first / Managed Storage 边界保持，没有依赖 create_all，没有改动 StorageProvider 或接入 AI。
+- Scene 创建在事务内同时产生 SCENE 节点。节点外键唯一，Service 检查项目归属和节点类型。Scene 独立维护内容，SCENE 节点的 title / description 留空；场景顺序只在 ScriptNode 中维护。
+- Project / Script / Scene / Shot CRUD、include_deleted、restore，项目真实统计；镜头编号项目内唯一、时长验证、后端上移 / 下移排序、项目级搜索 / 场景 / 状态过滤。
+- 删除 Project / Script 级联软删除后代；**删除 Scene 同步软删除对应 ScriptNode 和有效 Shot**，从所有正常列表及详情隐藏，没有物理删除。恢复只恢复同次删除的后代，保留此前单独删除的状态；批次时间在现有删除时间之后，避免时钟精度与回拨造成误恢复。
+- 镜头编号 trim 后区分大小写，软删除后仍占用编号，恢复不会遇到被新记录抢占的问题；恢复场景 / 单个镜头追加到末尾，顺序连续。
+- `/projects`、Project Overview、Script、Scenes、Shots 和基础 Shot Detail 页面，实际数据库 CRUD。Script 展示可折叠的剧本 → 场景 → 镜头层级，用户不需要接触 ScriptNode。
+- 项目卡片、真实数量、紧凑镜头表格、组合搜索筛选、编辑、排序、删除确认、Dark / Light。Shot Detail 仅基础信息与编辑，没有 Prompt / Storyboard UI。
+- Dialog 即时验证、保存期间禁用字段 / 保存 / 关闭、API 错误、成功 Toast、Skeleton。404 不自动重试；缓存按受影响项目、场景、镜头刷新，级联删除清除已打开的镜头详情缓存。
+- 四个 Feature 各有 api.ts / hooks.ts / types.ts，统一 Query Key Factory。业务页面懒加载；Dashboard 最近更新项目读取数据库。没有业务 localStorage 或虚构记录。
+- 健康 API 的 `phase` 更新为 2。README、计划索引与状态文档已更新，Phase 1.5 验收归档。
 
 ## 验收结果
 
-| 检查 | 结果 |
+| 检查 | 最终结果 |
 | --- | --- |
-| ESLint | 通过 |
+| ESLint | 通过，无错误 / 警告 |
 | TypeScript + Vite build | 通过 |
-| Playwright 构建模式 | **12/12 通过，无跳过** |
-| Playwright Vite 开发模式 | **14/14 通过，无跳过** |
-| pytest 全部后端回归 | **61/61 通过，无跳过** |
-| Ruff check / format | 通过，35 个文件格式符合要求 |
-| Alembic current | `0001_app_settings (head)` |
-| Alembic check | `No new upgrade operations detected` |
-| 实际默认 Workspace 服务 | `http://127.0.0.1:8765` 正常，storage_initialized=true |
-| 主题与状态 | 默认/保存/非法/受限存储/跨标签同步、服务断线/重试、独立 Workspace 读取错误通过 |
-| 交互 | 只读详情、复制反馈、焦点约束/返回、Esc、表单、Select、Tabs、Switch、Checkbox、三类 Toast、媒体选择与三种比例通过 |
-| 可读性 | 两种主题各 10 组关键文字 Token 对比度 ≥4.5:1，并人工检查截图 |
-| 布局 | 1920 / 1440 / 1280 / 1024 / 390px 无水平溢出；1920px Main 超过 1600px |
-| Local-first | 页面资源请求只访问本地；详情查看和复制没有 API 写操作；未增加业务 localStorage |
+| 后端 pytest | **81/81 通过，无跳过** |
+| Ruff check / format | 通过，42 个文件格式符合要求 |
+| 前端 / 浏览器测试：构建模式 | **17/17 通过，无跳过** |
+| 前端 / 浏览器测试：Vite 开发模式 | **19/19 通过，无跳过** |
+| Alembic CLI upgrade → downgrade 0001 → upgrade | 通过，独立 `.workspace/phase2-migration` |
+| Alembic current / check | `0002_core_workflow (head)`；无 metadata 差异 |
+| 完整 downgrade base → upgrade / autogenerate | pytest 临时数据库通过 |
+| 带业务数据回退 / 已有 Phase 1 设置保留 | 通过；外键检查通过 |
+| 事务回滚 / 1:1 / 跨项目关系 | 通过，注入 Scene 写入失败后无孤立节点 |
+| 并发创建 / 唯一编号 / 连续排序 | 通过，8 个并发请求及同编号冲突验证 |
+| 恢复 / 重复恢复 / 时钟精度 | 通过，之前独立删除的子项不会被误恢复 |
+| 刷新与服务重启持久化 | 浏览器刷新与 FastAPI 重建分别通过 |
+| 页面布局与主题 | 两主题核心流程；1920 / 1280 / 1024 / 390px 无页面水平溢出，表格独立滚动 |
+| 既有功能 | 主题持久化、跨标签、受限存储、连接重试、Workspace 信息 / 复制、公共组件、颜色对比度、路径安全 / 存储回归通过 |
 | Git whitespace | `git diff --check` 通过 |
+| Git 工作区 | 本阶段代码、测试、文档和截图作为本地提交保存，提交后工作区干净 |
 
-原 Phase 0 的真实连接、失败恢复、404 返回和视口检查已迁入 workspace 测试并更新为正式工具 UI 的语义；bootstrap 测试现在覆盖主题初始化和跨标签同步。不是继续断言被需求要求删除的营销内容。
+前端测试继续使用既有 Playwright 基础设施，没有增加另一套测试框架。两种启动模式都真实运行后端、SQLite 和 React，覆盖创建 Project → Script → Scene → 多个 Shot，编辑、上移 / 下移、搜索 / 筛选、删除确认、刷新持久化、pending 与 API 冲突；另覆盖级联删除后的浏览器后退行为。
 
-测试服务使用独立 `.workspace/e2e` 配置和数据库；pytest 的数据库/存储/迁移测试使用临时目录，保留升降级、autogenerate、UTC / UUID、事务和危险路径回归。浏览器测试最多 2 workers。两种测试启动方式均实际运行并自动退出。
+旧测试中“仅有基础设施表”的断言按 Phase 2 更新为准确的五张业务表集合；时间戳更新测试改用明确的较早初始时间，继续断言 updated_at 前进，避免依赖 Windows 两次连续调用的时钟精度。没有以跳过测试处理失败。
 
-健康 API 的 `phase=1` 仍表示原后端基础设施阶段；UI Foundation 不改写已有 API 阶段字段。
+## 数据与环境隔离
+
+- pytest 使用临时 Workspace / Database；Playwright 使用 `.workspace/e2e` 下独立 bootstrap 与数据库，最多 2 workers，测试服务完成后退出。
+- 手动迁移验收只使用 `.workspace/phase2-migration`。**测试未写入用户真实 `D:\AI-Video-Workspace`**，没有修改用户 bootstrap 选择。
+- 正常启动器在下次启动时通过 Alembic 自动将用户当前 Workspace 升到 head；没有在用户数据库上执行回退。
+- 沿用现有 Node / Python / uv / npm 与 D 盘 Playwright 浏览器，没有安装新依赖、清理缓存、移动目录或更换架构。
 
 ## 截图
 
-正式截图使用实际默认 Workspace，非虚构业务数据：
+以下为真实 E2E 隔离数据库中的测试项目，明确不是用户生产数据；项目名称带 E2E 标识。已检查深浅色布局、信息密度和文字可读性。
 
-- [Dark Dashboard](docs/screenshots/phase-1.5-dark.png)
-- [Light Dashboard](docs/screenshots/phase-1.5-light.png)
-- [DetailSheet](docs/screenshots/phase-1.5-detail.png)
-- [Dark 组件验收](docs/screenshots/phase-1.5-components-dark.png)
-- [Light 组件验收](docs/screenshots/phase-1.5-components-light.png)
+- [Dark Script](docs/screenshots/phase-2-script-dark.png)
+- [Light Script](docs/screenshots/phase-2-script-light.png)
+- [Dark Shots](docs/screenshots/phase-2-shots-dark.png)
+- [Light Shots](docs/screenshots/phase-2-shots-light.png)
 
-## 资源与依赖
+## 当前边界
 
-[只读资源审计](docs/RESOURCE_AUDIT_2026-09-20.md) 记录 UI 开发前的基线、C/D 盘归因、RAM、依赖和图标。审计后没有执行缓存清理、目录迁移、原有依赖卸载或浏览器重新下载。
-
-| 项目 | UI 前 | UI 后测量 |
-| --- | ---: | ---: |
-| frontend/node_modules | 184.90 MiB | 189.30 MiB，增加约 4.40 MiB |
-| frontend/dist | 0.482 MiB | 0.632 MiB |
-| 生产 JS | 484.07 kB / gzip 151.49 kB | 634.70 kB / gzip 198.46 kB |
-| 生产 CSS | 20.86 kB / gzip 5.67 kB | 26.90 kB / gzip 6.31 kB |
-| backend/.venv | 69.64 MiB | 69.64 MiB |
-
-上表 bundle 单位 kB 为十进制，与 Vite 输出一致；磁盘 MiB 为二进制。UI 后工程文件内容快照约 260.89 MiB，测量在最终文档和部分验收截图落盘前，最终 Git 对象/截图会带来少量额外变化；未把逻辑大小冒充 NTFS 分配空间。审计中的 C 盘与 RAM 数字是开发前基线，不冒充新界面的重新测量。
-
-新增 9 个 Radix 直接依赖与 Sonner，共安装 49 个依赖包；安装时 npm audit 为 0 vulnerabilities。没有新增图标库、图表库、动画库或重型 UI Framework。未接入业务的组件由开发验收页消费，生产构建移除开发模块及只供它使用的 JS。
-
-## 已知限制
-
-- 本阶段不包含 Project / Asset / Character / Prompt 业务及创建操作。空状态不代表这些模块已实现。
-- 完整移动端体验不在当前范围；普通笔记本与桌面优先。
-- Vite 单 JS chunk 约 634.70 kB，仍有大于 500 kB 的性能提示。当前 gzip 约 198.46 kB；可在后续业务路由出现时按页面拆包，当前未提高提示阈值或引入额外框架。
-- 沿用的 Zod PURE 注释提示，以及 Starlette/httpx 和 AnyIO 弃用提示不阻止构建/测试，本阶段未为这些提示升级后端依赖。
-- 对比度测试覆盖核心 token，不是完整无障碍认证。
-- Phase 1 的单进程服务、文件补偿与缩略图能力边界继续适用，见历史验收记录。
+- 不包含 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI 或复杂 DnD。枚举中的制作状态仅为人工标记。
+- 单进程本地服务；列表当前加载本项目全部数据，尚无分页或虚拟列表。后端提供搜索 / 筛选参数，前端对已加载列表组合过滤。
+- 主 JS chunk 643.25 kB / gzip 201.47 kB，业务路由已拆包；Vite 仍提示主 chunk 超过 500 kB。未提高提示阈值。
+- 沿用的 Zod PURE 注释和 Starlette/httpx、AnyIO 弃用提示仍存在，不阻止构建或测试；本阶段未升级依赖。
+- 只验证 PostgreSQL DDL 可编译，没有连接真实 PostgreSQL；运行数据库保持 SQLite。现有 Storage 文件补偿与缩略图能力边界仍按 Phase 1 记录。
 
 ## 下一步
 
-**等待用户确认后才进入 Phase 2（Project / Script / Scene / Shot）。**
-
-## 2026-09-20 资源路径整改
-
-按资源审计后的明确要求完成两项本地路径整改，未改业务代码、UI 或依赖：
-
-- Playwright 1.63.0 的 Chromium v1243、Headless Shell v1243、FFmpeg v1011、WinLdd v1007 已安装到 `D:\study\DO\DevCache\playwright`。`frontend/scripts/playwright-env.mjs` 统一 `npm test` / `npm run test:install`，Playwright 配置也设置 `PLAYWRIGHT_BROWSERS_PATH`。C 盘 `ms-playwright` 完整保留。
-- 旧 `C:\Users\Lenovo\AI-Video-Workspace` 通过 SQLite backup 和目录初始化复制到 `D:\AI-Video-Workspace`；之后使用已有 Workspace API 切换并初始化 D 盘数据库。两个已发现的 Bootstrap Config 文件均保存 `D:\AI-Video-Workspace`，旧 C 盘 Workspace 未删除。
-- 冷启动新端口验证 API 返回 D 盘 Workspace，SQLite integrity / Phase 1 测试和浏览器测试均通过。测试结束后没有业务请求写入旧 C 盘 Workspace；C 盘只保留旧副本和用户级 Bootstrap Config 元数据。
+**停在 Phase 2，等待用户明确授权 Phase 3（Asset Library）。**

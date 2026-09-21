@@ -7,5 +7,5 @@ class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     app: Literal["ai-video-workspace"] = "ai-video-workspace"
     version: str = "0.1.0"
-    phase: int = 1
+    phase: int = 2
     storage_initialized: bool = False

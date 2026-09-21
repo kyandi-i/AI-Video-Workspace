@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from typing import BinaryIO
 from uuid import uuid4
@@ -158,5 +159,43 @@ class LocalStorageProvider(StorageProvider):
         return destination
 
     def create_thumbnail(self, relative_path: str) -> str:
-        self._safe(relative_path)
-        raise NotImplementedError("缩略图生成将在 Phase 3 资产导入阶段实现。")
+        from app.services.storage.media import decode_preview
+
+        _, preview = decode_preview(self._safe(relative_path))
+        key = f"thumbnails/{uuid4()}.jpg"
+        destination = self._safe(key)
+        published = False
+        try:
+            with self.stage_upload() as (temporary, output):
+                preview.save(output, format="JPEG", quality=82)
+                output.flush()
+                os.fsync(output.fileno())
+                output.close()
+                self._move_no_replace(self._safe(temporary), destination)
+                published = True
+            return key
+        except BaseException:
+            if published:
+                destination.unlink(missing_ok=True)
+            raise
+        finally:
+            preview.close()
+
+    def inspect_media(self, relative_path: str):
+        from app.services.storage.media import decode_preview
+
+        info, preview = decode_preview(self._safe(relative_path))
+        preview.close()
+        return info
+
+    @contextmanager
+    def stage_upload(self):
+        key = f"temp/{uuid4()}.partial"
+        path = self._safe(key)
+        # Exclusive-open failure must not remove another operation's temporary file.
+        output = path.open("xb+")
+        try:
+            with output:
+                yield key, output
+        finally:
+            self._safe(key).unlink(missing_ok=True)

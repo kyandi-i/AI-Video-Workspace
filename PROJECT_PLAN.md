@@ -1,6 +1,6 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 2.5 — UX Fix，已完成，等待用户确认。**
+当前开发阶段：**Phase 3 — Asset Library，已完成，等待用户验收。**
 
 ## 依据
 
@@ -11,7 +11,15 @@
 5. [资源审计](docs/RESOURCE_AUDIT_2026-09-20.md)：Phase 1.5 前只读基线。用户明确确认“审计完成后立即执行 Phase 1.5”。
 6. [Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)：用户本轮授权的项目层级业务闭环与验收映射；[Phase 1.5 历史状态](docs/PHASE_1_5_STATUS.md)。
 
-## Phase 2.5 范围
+## Phase 3 范围
+
+- [本轮用户要求](docs/PHASE_3_SPEC.md)：统一 Asset、Managed Storage 图片 / 视频导入、多文件 / Drag & Drop、metadata、thumbnail、Grid / List、搜索 / 分类 / 标签、DetailSheet、Project / Shot 绑定。
+- 只采用 IMAGE / VIDEO / STORYBOARD_6GRID / OTHER；本轮明确要求优先于 MVP 旧枚举列表。无 Character、Prompt 或 Storyboard 业务实体。
+- 删除被引用资产返回 ASSET_IN_USE；先解绑再软删除，原文件与缩略图保留。被删除的 Project / Shot 仍保留可解绑引用，便于未来恢复。
+- 迁移 0003_asset_library；Route → Service → Repository 与 StorageService ↔ StorageProvider 保持。
+- 完成后停在 Phase 3，不自动进入 Phase 4。详见 [开发状态](DEVELOPMENT_STATUS.md)。
+
+## Phase 2.5 已完成范围
 
 - 只修现有 Project / Script / Scene / Shot 与公共组件的 UI / UX，不改业务模型、API 或迁移，不新增业务能力。
 - 公共 Select 几何布局、状态 value → label / Badge 映射、控件尺寸、Dialog / Sheet 布局、删除确认、列表行高与长文本。
@@ -27,6 +35,6 @@
 - 沿用 Dark / Light、紧凑工作台、Dialog、Skeleton、Toast、TanStack Query；只刷新受影响的数据。
 - 数据库 / Service / API / 浏览器验证、迁移回退回升、文档与本地 Git 提交。
 
-不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
+Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-完成本阶段后暂停。**Phase 3 必须再次获得用户确认，不自动进入。**
+完成本阶段后暂停。**Phase 4 必须获得用户确认，不自动进入。**

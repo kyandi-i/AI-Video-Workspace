@@ -237,7 +237,7 @@ def test_compensation_cleans_up_after_db_rollback(source, workspace):
         assert BaseRepository(session, AppSetting).list() == []
 
 
-def test_thumbnail_is_explicitly_deferred(storage, source):
+def test_thumbnail_rejects_invalid_media(storage, source):
     stored = storage.save_file(source)
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(AppError):
         storage.create_thumbnail(stored.relative_path)

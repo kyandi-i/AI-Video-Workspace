@@ -6,6 +6,8 @@ import { resolve } from "node:path";
 process.env.PLAYWRIGHT_BROWSERS_PATH = "D:\\study\\DO\\DevCache\\playwright";
 
 const dev = process.env.AVW_E2E_MODE === "dev";
+const runDirectory =
+  process.env.AVW_E2E_RUN_DIRECTORY ?? resolve("../.workspace/e2e");
 const python =
   process.platform === "win32"
     ? "../backend/.venv/Scripts/python.exe"
@@ -13,6 +15,7 @@ const python =
 
 export default defineConfig({
   testDir: "./tests",
+  globalSetup: "./tests/global-setup.ts",
   fullyParallel: true,
   workers: 2,
   reporter: "list",
@@ -23,8 +26,8 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     env: {
-      AVW_WORKSPACE_ROOT: resolve("../.workspace/e2e/workspace"),
-      AVW_BOOTSTRAP_CONFIG_PATH: resolve("../.workspace/e2e/config.json"),
+      AVW_WORKSPACE_ROOT: resolve(runDirectory, "workspace"),
+      AVW_BOOTSTRAP_CONFIG_PATH: resolve(runDirectory, "config.json"),
     },
     command: `"${python}" ../scripts/start.py --no-browser --port 8766${dev ? " --dev --frontend-port 5174" : ""}`,
     url: dev ? "http://127.0.0.1:5174" : "http://127.0.0.1:8766",

@@ -13,6 +13,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <DashboardPage /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/assets", lazy: () => import("@/features/assets/assets-page") },
       {
         path: "/projects",
         lazy: () => import("@/features/projects/projects-page"),
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
             lazy: () => import("@/features/scenes/scenes-page"),
           },
           { path: "shots", lazy: () => import("@/features/shots/shots-page") },
+          {
+            path: "assets",
+            lazy: () => import("@/features/assets/assets-page"),
+          },
         ],
       },
       {

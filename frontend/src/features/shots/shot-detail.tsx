@@ -48,6 +48,9 @@ function Detail({ shot }: { shot: Shot }) {
         }
       />
       <WorkspacePanel title="镜头信息">
+        <Link className="back-link" to={`/assets?shot_id=${shot.id}`}>
+          查看关联资产 →
+        </Link>
         <dl className="shot-facts">
           <div>
             <dt>场景</dt>

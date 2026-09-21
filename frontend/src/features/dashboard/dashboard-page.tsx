@@ -197,12 +197,17 @@ export function DashboardPage() {
                 }
               />
             </WorkspacePanel>
-            <WorkspacePanel title="最近素材" metadata="Assets">
+            <WorkspacePanel title="素材管理" metadata="Assets">
               <EmptyState
                 compact
                 icon={Images}
-                title="暂无素材预览"
-                description="素材与引用内容将在这里集中展示。"
+                title="统一 Asset Library"
+                description="导入、预览与查找素材，绑定到项目和镜头。"
+                action={
+                  <Button asChild variant="secondary" size="sm">
+                    <Link to="/assets">打开资产库</Link>
+                  </Button>
+                }
               />
             </WorkspacePanel>
           </div>

@@ -4,62 +4,125 @@
 
 ## 当前阶段
 
-**Phase 2.5 · UX Fix：已完成并暂停，等待用户确认。Phase 3 尚未开始。**
+**Phase 3 — Asset Library 已完成。停在本阶段，等待用户验收；Phase 4 未开始。**
 
-本次只修现有 Project / Script / Scene / Shot 交互和公共组件，没有新增业务能力，没有修改后端、业务模型、API 契约、迁移或依赖。依据：[计划索引](PROJECT_PLAN.md)、[UI 规范](docs/UI_FOUNDATION.md)、[MVP v0.1 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
+依据：[本轮授权原文](docs/PHASE_3_SPEC.md)、[计划索引](PROJECT_PLAN.md)、[MVP 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)、[Phase 2](docs/PHASE_2_STATUS.md)、[Phase 2.5](docs/PHASE_2_5_STATUS.md)。
 
-历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)、[Phase 2](docs/PHASE_2_STATUS.md)。Phase 2 的业务规则、软删除范围和存储边界保持不变。
+## 开始时真实状态与文档差异
 
-## 修复说明
+- 实际最新提交 `ff29ea6 fix: unify Phase 2.5 select and workflow UX`；修改前 `git status --short` 仅有未跟踪的 HANDOFF.md。
+- HANDOFF 仍声称 Phase 2.5 未完成、最新提交 71d25ba，测试为 81 / 17 / 19，部分路径迁移描述过期。本轮保留其历史正文并添加显著历史标注，随文档纳入版本控制。
+- MVP 第 16 节列举了用途型 AssetType；本轮明确冻结为 IMAGE / VIDEO / STORYBOARD_6GRID / OTHER，以最新用户要求为准。没有 Character / CharacterState / Storyboard 业务实体或工作流。
+- 读取并复用现有代码、migration、tests、npm scripts、依赖锁及 Workspace / Storage 机制；没有推断历史 commit 或更换技术栈。
 
-- **Select 根因修复**：原 `.select-item > span:last-child` 将最后一个 span 当作勾选标记；未选中时 Indicator 不渲染，实际被绝对定位的是 ItemText，造成文字错位、行高塌陷与重叠。现在 Value / ItemText 使用显式布局容器，Indicator 独立定位，不再依赖子元素顺序。Radix 会忽略 Value / ItemText 自身的 className / style，因此样式落在外层容器上。
-- Select Trigger / Item 同为 36px，垂直居中；左右基准 padding 12px，选项右侧额外预留 28px。长文本截断且保留 title，不覆盖勾选图标；hover / focus / selected 各有清晰状态。Content 限制在可用视口内，Viewport 独立滚动。现有项目状态、镜头状态、剧本选择、场景选择和列表筛选全部复用此实现。
-- `lib/status-display.ts` 是 Project / Shot 状态 label 与 tone 的唯一配置；`lib/enum-display.ts` 的 `enumOptions` 保留原始 value，生成友好 label。表单、筛选、Dashboard、项目卡片、列表和详情统一使用配置与 StatusBadge。后端仍接收原始枚举，未来枚举可复用同一机制，本轮没有实现未来业务类型。
-- Input / Select / 默认 Button 统一为 36px，紧凑操作按钮为 32px；统一 12px 字号、20px 行高、6px 圆角、focus ring 与 disabled。Textarea 使用最小 88px 的多行规格，Dark / Light 共用尺寸 token。
-- EntityForm 固定 Header / Footer，正文独立滚动；取消在左、保存在右。保存中禁用字段、关闭及操作按钮，并显示“保存中…”。ref 提交门闩防止 React pending 更新前的重复请求；删除使用相同保护。移除影响 Sheet 高度的后置 Dialog 样式覆盖。
-- Project / Script / Scene / Shot 统一 DeleteEntity 确认模式，显示对象名称和影响范围。Scene 明确说明子 Shot 同时软删除并显示数量；删除按钮使用 Danger 样式。没有改变删除语义。
-- 镜头表格保持 52px 行高；长标题、编号与场景名单行截断，操作区始终预留空间。状态统一使用 StatusBadge，颜色按 Neutral / Accent / Warning / Success 语义划分。
-- 首次请求使用 Skeleton，空列表提供下一步操作，错误显示可读 message 和重试。后台刷新失败保留已成功加载的内容；404 隐藏失效实体。网络及非 JSON 错误使用可读兜底文案。
-- Shots 搜索、场景与状态筛选保持统一控件高度；无匹配结果显示清除筛选入口。筛选写入 URL，打开 S13 后返回能保留上下文；从 Script / Scenes 打开镜头后返回原入口。
-- 上移 / 下移继续由后端决定最终顺序；前端取消过期读取并一次性应用服务端返回列表，避免旧请求覆盖新顺序。边界按钮禁用，没有引入前端排序规则或复杂拖拽。
+## 实际完成能力
 
-## 受影响的公共组件
+- 统一 Asset Library：普通文件选择、多文件顺序导入、Drag & Drop、每项等待 / 导入中 / 成功 / 失败反馈、提交防重；一个坏文件不影响后续文件。
+- PNG / JPG / JPEG / WebP 图片，以及 MP4 / MOV / WebM 视频；真实签名 / 解码校验、MIME、大小、尺寸、视频时长与 SHA-256。支持首帧缩略图、详情视频播放及 HTTP Range。
+- Grid / List、名称和原文件名搜索、类型 / 标签筛选、每批 60 项加载更多。URL 保留视图、筛选和当前打开的详情。
+- DetailSheet：按需原图 / 视频预览、基本 metadata、名称 / 描述 / 类型编辑、标签增删、Project / Shot 使用关系、绑定 / 解绑、资产软删除。
+- Project 增加 Assets 入口；Shot Detail 增加关联资产入口。它们查询同一资产库，绑定不复制文件，没有提前实现完整 Shot Workspace。
+- Dark / Light、1280 × 800 与 1024 × 720 检查通过；长文件名与标签截断、按钮位置稳定。修复新增 Assets 标签使 390px 导航溢出的问题；修复 Radix ScrollArea 的内部 table 布局被长标签撑宽的问题。既有公共组件与 Select 用例全部保留通过。
 
-`Select / SelectValue / SelectTrigger / SelectContent / SelectItem`、Input / Textarea / Button 的共享样式、Dialog / Sheet 的布局样式、`EntityForm / Choice / DeleteEntity`、`QueryState / ErrorState / QueryErrors`，以及新增 `StatusBadge` 与枚举显示工具。所有业务表单继续使用既有组件和 TanStack Query。
+## 数据模型
 
-## 验收结果
+所有新增表均沿用 UUIDMixin、TimestampMixin、SoftDeleteMixin，使用正式迁移 **0003_asset_library**。
 
-| 检查 | 结果 |
+| 实体 / 表 | 核心字段或关系 |
 | --- | --- |
-| 前端 ESLint | 通过，无错误或警告 |
-| TypeScript + Vite build | 通过 |
-| 浏览器测试：构建模式 | **22/22 通过，无跳过** |
-| 浏览器测试：Vite 开发模式 | **24/24 通过，无跳过** |
-| 后端 pytest | **81/81 通过，无跳过** |
-| Ruff check / format | 通过，42 个文件符合格式 |
-| 迁移回归 | pytest 隔离数据库 upgrade → downgrade → upgrade、autogenerate 与外键检查通过；head 仍为 `0002_core_workflow` |
-| Git whitespace | `git diff --check` 通过 |
+| Asset / assets | name、description、asset_type、original_filename、storage_path、thumbnail_path、mime_type、file_size、width、height、duration_seconds、checksum |
+| Tag / tags | name、normalized_name UNIQUE；Unicode NFKC、空白折叠、casefold 去重，最多 80 字符 |
+| AssetTag / asset_tags | Asset N:N Tag；asset_id + tag_id UNIQUE |
+| ProjectAssetLink / project_asset_links | Project N:N Asset；project_id + asset_id UNIQUE |
+| ShotAssetLink / shot_asset_links | Shot N:N Asset；shot_id + asset_id UNIQUE |
 
-新增 5 个浏览器用例，覆盖深浅色下选项的几何布局、hover / focus / selected、键盘选择、全部状态友好文案与原始 API value、控件尺寸、固定弹窗区域、长文本、删除影响说明、空结果、导航返回、排序与提交防重。额外模拟后台请求失败，验证旧内容保留和可读错误重试。
+同一 Asset 可同时绑定多个项目 / 镜头，重复绑定幂等；解除绑定只软删除 Link，再绑定恢复同一 Link。Shot 绑定不隐式创建 Project 绑定。AssetType 与文件真实 MIME 分离：图片可归 Image / Storyboard 6-Grid / Other，视频可归 Video / Other，不能把视频改为图片分类。六宫格不要求生成 Storyboard 实体。
 
-既有完整 CRUD、刷新持久化、级联删除后浏览器返回、主题持久化、Workspace 信息与 Sheet、连接重试和公共组件交互全部通过。检查全部现有业务页面，两主题下在 1280px 笔记本宽度、1366 / 1024 × 720 窗口检查弹窗与菜单；既有响应式测试继续覆盖 1920 / 1280 / 1024 / 390px。
+## Storage 与失败一致性
 
-测试继续使用既有 Playwright，不增加测试框架。pytest 使用临时 Workspace；浏览器使用 `.workspace/e2e` 隔离配置和数据库，测试服务自动退出。**没有写入用户真实 `D:\AI-Video-Workspace`，没有更改用户 bootstrap 选择。**
+- 继续 `Route → Service → Repository`；文件处理由 `StorageService ↔ StorageProvider`，本地实现为 LocalStorageProvider。没有 Route SQL、BLOB、base64 API 或用户原始绝对路径引用。
+- raw binary upload 写入当前 Workspace 的 `storage/temp/<uuid>.partial`；避免 multipart 框架落入系统临时目录。媒体验证后复制为 `storage/assets/<前两位>/<uuid>.<ext>`。
+- 图片 / 视频首帧缩略图保存为长边至多 512px 的 JPEG，位于 `storage/thumbnails/<uuid>.jpg`。列表只加载缩略图，不批量解码视频。
+- DB 保存相对 Workspace 的 `storage/assets/...`、`storage/thumbnails/...`；Provider 内部继续使用相对 storage 根的 key，不重建 Workspace Root。
+- 文件复制 → 缩略图 → DB 写入与 commit；常规异常清理本次副本、缩略图和临时文件并回滚 DB。复制、缩略图、Repository 写入和 commit 注入失败均已验证。缩略图和上传临时文件名称冲突均不会覆盖或删除其他操作的已有文件。
+- 上传断开及工作空间在上传途中切换会清理临时文件；切换后拒绝把旧文件写入新 DB。提交阶段沿用匹配数据库 / storage 的资源租约。
+- 重复导入同样内容创建独立 UUID 副本；checksum 记录相同，但不做隐式去重。绑定同一 Asset 不产生新文件。源文件导入后删除不影响托管副本。
 
-## 修复后截图
+## 删除策略
 
-以下为真实浏览器、隔离 E2E 数据库中的测试记录；长标题用于检查截断，不是产品种子数据。截图已人工检查。
+- 资产被项目或镜头引用时返回 **409 ASSET_IN_USE**，要求先解绑再软删除；没有静默删除文件。
+- Project / Scene / Shot 删除保持原有行为，Asset 本体和文件不受影响。已软删除 Project / Shot 的引用也计为占用，详情明确标注且允许解除，避免未来恢复后产生 broken reference。
+- Asset 软删除后普通列表、详情与文件 API 均不可见，原文件、缩略图和标签关系保留。API 提供 include_deleted / restore；没有永久删除、回收站 UI 或导出能力。
+
+## API
+
+详细参数见 [README Asset API](README.md#asset-api) 或运行后的 `/api/docs`。全部路径有 `/api` 前缀。
+
+| 方法 | 地址 |
+| --- | --- |
+| GET / POST | `/assets`（列表） / `/assets/upload`（二进制上传） |
+| GET / PATCH / DELETE | `/assets/{id}` |
+| POST | `/assets/{id}/restore` |
+| GET | `/assets/{id}/file`、`/assets/{id}/thumbnail` |
+| GET / POST | `/tags` |
+| POST / DELETE | `/assets/{id}/tags/{tag_id}` |
+| POST | `/projects/{project_id}/assets`、`/shots/{shot_id}/assets` |
+| DELETE | `/projects/{project_id}/assets/{asset_id}`、`/shots/{shot_id}/assets/{asset_id}` |
+
+资产列表支持 search、asset_type、tag_id、project_id、shot_id、include_deleted、offset、limit。统一错误 `{code, message, details}`；覆盖 INVALID_MEDIA、UNSUPPORTED_FILE、EMPTY_FILE、FILE_TOO_LARGE、INVALID_ASSET_TYPE、ASSET_IN_USE、ASSET_NOT_FOUND、WORKSPACE_CHANGED 等。
+
+## 最终验收结果
+
+| 检查 | 实际结果 |
+| --- | --- |
+| frontend lint | **PASS，无错误 / 警告** |
+| TypeScript / Vite build | **PASS** |
+| backend pytest | **109/109 PASS，无跳过**（原 81 项 + 28 项资产用例） |
+| Ruff check / format | **PASS，52 个 Python 文件** |
+| browser production/build | **26/26 PASS，无跳过**（原 22 项 + 4 项资产用例） |
+| browser development | **28/28 PASS，无跳过**（含原公共组件开发验收） |
+| Alembic CLI | 独立 `.workspace/phase3-migration`：upgrade head → downgrade 0002_core_workflow → upgrade head 全通过 |
+| Alembic current / check | **0003_asset_library (head)**；No new upgrade operations detected |
+| 数据迁移 | pytest 验证已有 Phase 2 项目 / 剧本 / 场景 / 镜头升级与带引用数据回退再升级后保留、完整 downgrade base → upgrade、metadata / FK 一致性 |
+| git diff --check | **PASS** |
+
+后端覆盖全部支持格式、真实内容识别、源文件删除后独立性、无效 / 超限 / 截断媒体、分页与字面搜索、标签去重、重复关系、引用保护、软删除 / 恢复、部分失败、断开 / 切换、文件与 DB 提交补偿。
+
+浏览器覆盖正常导入、多文件中夹杂坏文件、视频拖入 / metadata / 播放、Grid / List、搜索 / 类型 / 标签筛选、编辑、标签、项目 / 镜头绑定与刷新持久化、拒绝删除被引用资产、解除关系、Loading / Empty / Error / Retry、导入防重。原 Project / Script / Scene / Shot CRUD、排序、Select 几何布局、深浅色、Workspace 信息与代理启动全部通过。
+
+## 隔离与资源
+
+- 用户明确表示无需验证真实素材，本轮没有访问或导入真实 SPF 素材，也未写入 `D:\AI-Video-Workspace`。
+- pytest 使用临时 Workspace；npm test 为每轮创建 `.workspace/e2e/run-*`，bootstrap、DB、夹具、assets、thumbnails、temp 均在隔离目录。成功后服务退出再清理该次目录；失败目录保留排查。直接 Playwright 使用 `.workspace/e2e` 默认隔离目录。
+- 自动审批曾拦截清理失败运行目录 `run-kHtmWX` 的命令，理由仅为 blocked by policy；未绕过，保留该 Git 忽略的测试目录。最终两轮成功运行目录均由正常测试脚本自动清理。
+- 只提交代码、文档、截图；不提交 Workspace、DB、合成测试素材文件、.env、缓存或 API Key。测试素材由小型确定性脚本现场生成。
+
+## 新增依赖
+
+| 名称 | 锁定版本 | 用途 | 本机安装体积 |
+| --- | --- | --- | --- |
+| Pillow | 12.3.0 | 图片签名 / 解码、EXIF 方向、metadata、JPEG 缩略图 | 约 14.08 MiB |
+| PyAV / av | 18.1.0 | 本地视频容器 / 时长 / 首帧解码；wheel 内含 FFmpeg 库 | 约 66.07 MiB |
+
+修改 backend/pyproject.toml 与 uv.lock，无新增前端或系统依赖，不安装 FFmpeg CLI、NumPy、大型运行环境或后台队列。原有后端依赖没有升级。依据：[Pillow Image](https://pillow.readthedocs.io/en/stable/reference/Image.html)、[PyAV](https://github.com/PyAV-Org/PyAV)。
+
+## UI 截图
+
+全部来自真实浏览器与隔离测试数据库，合成图片明确标记 SPF TEST，并非真实 SPF 项目素材。已人工查看关键深浅色截图。
 
 | 页面 | Dark | Light |
 | --- | --- | --- |
-| Shot 编辑状态 Select | [截图](docs/screenshots/phase-2.5-shot-select-dark.png) | [截图](docs/screenshots/phase-2.5-shot-select-light.png) |
-| Project 编辑状态 Select | [截图](docs/screenshots/phase-2.5-project-select-dark.png) | [截图](docs/screenshots/phase-2.5-project-select-light.png) |
-| Shots 列表与筛选 | [截图](docs/screenshots/phase-2.5-shots-dark.png) | [截图](docs/screenshots/phase-2.5-shots-light.png) |
-| Scene 删除范围确认 | [截图](docs/screenshots/phase-2.5-delete-dark.png) | [截图](docs/screenshots/phase-2.5-delete-light.png) |
+| Grid / Import | [截图](docs/screenshots/phase3-grid-dark.png) | [截图](docs/screenshots/phase3-grid-light.png) |
+| List / Search / Filter | [截图](docs/screenshots/phase3-list-dark.png) | [截图](docs/screenshots/phase3-list-light.png) |
+| DetailSheet / Preview | [截图](docs/screenshots/phase3-detail-dark.png) | [截图](docs/screenshots/phase3-detail-light.png) |
+| Tags / Project / Shot binding | [截图](docs/screenshots/phase3-bindings-dark.png) | [截图](docs/screenshots/phase3-bindings-light.png) |
 
-## 现有边界
+## 真实限制
 
-- 不含 Asset Library / Character / Prompt / Storyboard / VideoResult 等后续业务；状态只作人工标记。
-- 列表仍读取项目全部记录，没有增加分页、虚拟列表或移动端业务布局。
-- 主 JS chunk 645.64 kB / gzip 202.39 kB，Vite 超过 500 kB 提示仍存在，没有提高阈值。既有 Zod PURE 注释、Python 依赖弃用提示未阻止构建与测试，本次没有升级依赖。
-- **停在 Phase 2.5，等待用户确认，不自动进入 Phase 3。**
+- 单文件 512 MiB，图像 / 视频解码尺寸不超过 4000 万像素。Other 仅为支持媒体的分类，不接收任意文档 / 可执行文件。
+- 视频检查容器、有效时长和首个可解码帧，不逐帧扫描整段完整性。原文件不转码，浏览器播放能力取决于格式 / codec，部分 MOV 等只保证 metadata 与缩略图，提供原文件入口。
+- 常规失败有补偿，但文件系统与 SQLite 不是跨资源原子事务；进程强制终止 / 断电或清理操作本身遇到磁盘故障仍可能留下文件。本阶段没有后台任务或崩溃恢复日志。
+- 同一服务进程内的提交沿用 Workspace 租约串行化，大视频处理可能短暂等待。没有引入多进程生产部署、虚拟列表或复杂资源队列。
+- 主 JS chunk 646.49 kB / gzip 约 202.60 kB；资产页面单独懒加载约 16.83 kB / gzip 6.23 kB。既有 Vite 大于 500 kB、Zod PURE 注释和 Python 依赖弃用提示仍存在，没有隐藏警告或升级无关依赖。
+
+**Phase 3 完成后停止开发，等待用户验收。**

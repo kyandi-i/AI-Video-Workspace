@@ -45,6 +45,13 @@ class StorageProvider(ABC):
     @abstractmethod
     def create_thumbnail(self, relative_path: str) -> str: ...
 
+    @abstractmethod
+    def stage_upload(self):
+        """Context manager yielding (relative key, writable binary handle); always cleans up."""
+
+    @abstractmethod
+    def inspect_media(self, relative_path: str): ...
+
     @contextmanager
     def save_with_compensation(self, source: Path) -> Iterator[StorageObject]:
         """Enclose a DB transaction (including commit) to clean up a rejected import."""

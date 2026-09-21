@@ -33,16 +33,26 @@ def test_migration_upgrade_downgrade_and_autogenerate(tmp_path):
                 "script_nodes",
                 "scenes",
                 "shots",
+                "assets",
+                "tags",
+                "asset_tags",
+                "project_asset_links",
+                "shot_asset_links",
+                "assets",
+                "tags",
+                "asset_tags",
+                "project_asset_links",
+                "shot_asset_links",
             }
             assert (
                 connection.scalar(text("select version_num from alembic_version"))
-                == "0002_core_workflow"
+                == "0003_asset_library"
             )
             command.check(config)
             revision = command.revision(
                 config, message="test metadata discovery", autogenerate=True
             )
-            assert revision.down_revision == "0002_core_workflow"
+            assert revision.down_revision == "0003_asset_library"
             command.upgrade(config, "head")
             command.downgrade(config, "base")
             assert "app_settings" not in inspect(connection).get_table_names()

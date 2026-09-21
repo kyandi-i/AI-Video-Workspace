@@ -6,15 +6,19 @@ export async function requestJson<T>(
   path: string,
   method = "GET",
   data?: unknown,
+  file?: Blob,
 ): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`/api${path}`, {
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(file ? 300_000 : 8_000),
       method,
-      headers:
-        data === undefined ? undefined : { "Content-Type": "application/json" },
-      body: data === undefined ? undefined : JSON.stringify(data),
+      headers: file
+        ? { "Content-Type": "application/octet-stream" }
+        : data === undefined
+          ? undefined
+          : { "Content-Type": "application/json" },
+      body: file ?? (data === undefined ? undefined : JSON.stringify(data)),
     });
   } catch {
     throw new Error("无法连接本地服务，请确认服务运行后重试。");

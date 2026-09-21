@@ -29,6 +29,7 @@ export function Component() {
           ["script", "Script"],
           ["scenes", "Scenes"],
           ["shots", "Shots"],
+          ["assets", "Assets"],
         ].map(([path, label]) => (
           <NavLink
             key={label}

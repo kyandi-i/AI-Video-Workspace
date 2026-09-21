@@ -111,3 +111,9 @@ Phase 2.5 已完成并暂停，等待用户确认；不自动进入 Phase 3。
 现有业务表单使用 EntityForm / DeleteEntity，取消始终在左、保存或确认删除在右。表格保持 52px 行高，小按钮与图标按钮同高；长标题 / 场景名单行截断并保留完整 title。操作区常驻，不在 hover 时改变布局。
 
 浏览器几何验收同时检查选项高度、文字垂直中心、文字与勾选图标间距、菜单边界、控件字体 / 圆角 / 高度、Dialog 固定区域、长标题行高。截图见 `docs/screenshots/phase-2.5-*`，使用隔离 E2E Workspace 的测试记录。
+
+## Phase 3 复用与小范围修正
+
+Asset Library 沿用 MediaCard、DetailSheet、Choice / Select、Input、Button、Badge、QueryState、EntityForm、DeleteEntity；AssetType 显示通过 enumOptions，未改动既有状态映射。新样式限定在 asset 前缀。
+
+Project 导航增加 Assets 后改为内部横向滚动，避免 390px 页面溢出；DetailSheet 的 Radix ScrollArea 内部测量容器改为 block，避免长标签撑宽内容。长标签 / 文件名截断，Sheet 保持垂直滚动。全部 Phase 2.5 Select 与 Sheet 浏览器回归通过。

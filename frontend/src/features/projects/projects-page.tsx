@@ -1,11 +1,12 @@
+import { isMissingEntity } from "@/api/client";
+import { StatusBadge } from "@/components/common/status-badge";
 import { FolderOpen } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/page-header";
 import { EntityCard } from "@/components/common/entity-card";
 import { EmptyState } from "@/components/common/empty-state";
-import { QueryState } from "@/components/common/query-state";
+import { QueryState, QueryErrors } from "@/components/common/query-state";
 import { DeleteEntity } from "@/components/common/entity-form";
 import { ProjectEditor } from "./project-editor";
 import { useProjects, useProjectMutations } from "./hooks";
@@ -20,7 +21,10 @@ export function Component() {
         description="组织项目、剧本、场景与镜头。"
         actions={<ProjectEditor />}
       />
-      {projects.isPending || projects.isError ? (
+      {projects.data && !isMissingEntity(projects.error) && (
+        <QueryErrors queries={[projects]} />
+      )}
+      {!projects.data || isMissingEntity(projects.error) ? (
         <QueryState queries={[projects]} />
       ) : !projects.data.length ? (
         <EmptyState
@@ -39,7 +43,7 @@ export function Component() {
             >
               <EntityCard
                 name={project.name}
-                status={<Badge>{project.status}</Badge>}
+                status={<StatusBadge status={project.status} />}
                 metadata={
                   <>
                     <p className="text-summary">

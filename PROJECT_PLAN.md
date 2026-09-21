@@ -1,6 +1,6 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 2 — Project / Script / Scene / Shot，已完成。**
+当前开发阶段：**Phase 2.5 — UX Fix，已完成，等待用户确认。**
 
 ## 依据
 
@@ -11,7 +11,15 @@
 5. [资源审计](docs/RESOURCE_AUDIT_2026-09-20.md)：Phase 1.5 前只读基线。用户明确确认“审计完成后立即执行 Phase 1.5”。
 6. [Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)：用户本轮授权的项目层级业务闭环与验收映射；[Phase 1.5 历史状态](docs/PHASE_1_5_STATUS.md)。
 
-## Phase 2 范围
+## Phase 2.5 范围
+
+- 只修现有 Project / Script / Scene / Shot 与公共组件的 UI / UX，不改业务模型、API 或迁移，不新增业务能力。
+- 公共 Select 几何布局、状态 value → label / Badge 映射、控件尺寸、Dialog / Sheet 布局、删除确认、列表行高与长文本。
+- Loading / Empty / Error、返回导航与筛选保留、服务端镜头顺序的稳定显示。
+- Dark / Light、笔记本窗口、全部既有 CRUD 与公共组件回归、截图与文档。
+- 详细结果见 [开发状态](DEVELOPMENT_STATUS.md)；[Phase 2 历史验收](docs/PHASE_2_STATUS.md)。
+
+## Phase 2 已完成范围
 
 - Project → Script → ScriptNode(SCENE) → Scene → Shot，五张 UUID / 时间戳 / 软删除表与正式迁移。
 - Route → Service → Repository；场景 / 节点事务一致性、项目关系校验、镜头编号唯一性与连续排序。

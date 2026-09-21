@@ -1,6 +1,7 @@
+import { isMissingEntity } from "@/api/client";
 import { Layers } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
-import { QueryState } from "@/components/common/query-state";
+import { QueryState, QueryErrors } from "@/components/common/query-state";
 import { useCurrentProject } from "@/features/projects/use-current-project";
 import { useScripts } from "@/features/scripts/hooks";
 import { ScriptEditor } from "@/features/scripts/script-editor";
@@ -18,9 +19,9 @@ export function Component() {
     !scenes.data ||
     !scripts.data ||
     !shots.data ||
-    scenes.isError ||
-    scripts.isError ||
-    shots.isError
+    isMissingEntity(scenes.error) ||
+    isMissingEntity(scripts.error) ||
+    isMissingEntity(shots.error)
   )
     return <QueryState queries={[scenes, scripts, shots]} />;
   const action = scripts.data.length ? (
@@ -30,6 +31,7 @@ export function Component() {
   );
   return (
     <div className="workflow-stack">
+      <QueryErrors queries={[scenes, scripts, shots]} />
       <div className="section-toolbar">
         <div>
           <h2>Scenes</h2>

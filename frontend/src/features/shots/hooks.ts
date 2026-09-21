@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { projectsKeys, scenesKeys, shotsKeys } from "@/api/query-keys";
 import { shotApi } from "./api";
-import type { ShotInput } from "./types";
+import type { Shot, ShotInput } from "./types";
 
 export const useShots = (id: string) =>
   useQuery({
@@ -47,20 +47,29 @@ export function useShotMutations(projectId: string) {
   const move = useMutation({
     mutationFn: ({ id, direction }: { id: string; direction: "up" | "down" }) =>
       shotApi.move(id, direction),
-    onSuccess: (shots) =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: shotsKeys.byProject(projectId) }),
-        ...(shots[0]
-          ? [
-              client.invalidateQueries({
-                queryKey: shotsKeys.byScene(shots[0].scene_id),
-              }),
-            ]
-          : []),
-        ...shots.map((shot) =>
-          client.invalidateQueries({ queryKey: shotsKeys.detail(shot.id) }),
-        ),
-      ]),
+    onSuccess: async (shots) => {
+      const sceneId = shots[0]?.scene_id;
+      if (!sceneId) return;
+      // Apply the server's canonical order in one cache update. Cancel older reads
+      // first so a response from before the move cannot flash the previous order.
+      await Promise.all(
+        [
+          shotsKeys.byProject(projectId),
+          shotsKeys.byScene(sceneId),
+          ...shots.map((shot) => shotsKeys.detail(shot.id)),
+        ].map((queryKey) => client.cancelQueries({ queryKey })),
+      );
+      client.setQueryData<Shot[]>(shotsKeys.byProject(projectId), (current) => {
+        if (!current) return current;
+        const first = current.findIndex((shot) => shot.scene_id === sceneId);
+        return current.flatMap((shot, index) =>
+          index === first ? shots : shot.scene_id === sceneId ? [] : [shot],
+        );
+      });
+      client.setQueryData(shotsKeys.byScene(sceneId), shots);
+      for (const shot of shots)
+        client.setQueryData(shotsKeys.detail(shot.id), shot);
+    },
   });
   return { save, remove, move };
 }

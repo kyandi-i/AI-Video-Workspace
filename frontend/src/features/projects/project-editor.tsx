@@ -1,7 +1,8 @@
+import { projectStatusOptions } from "@/lib/status-display";
 import { Button } from "@/components/ui/button";
 import { EntityForm } from "@/components/common/entity-form";
 import { useProjectMutations } from "./hooks";
-import { projectStatuses, type Project, type ProjectStatus } from "./types";
+import { type Project, type ProjectStatus } from "./types";
 
 export function ProjectEditor({ project }: { project?: Project }) {
   const { save } = useProjectMutations();
@@ -20,7 +21,7 @@ export function ProjectEditor({ project }: { project?: Project }) {
           name: "status",
           label: "状态",
           kind: "select",
-          options: projectStatuses.map((value) => ({ value, label: value })),
+          options: projectStatusOptions,
         },
       ]}
       initial={{

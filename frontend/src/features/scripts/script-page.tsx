@@ -1,7 +1,8 @@
+import { isMissingEntity } from "@/api/client";
 import { FileText, Layers } from "lucide-react";
 import { WorkspacePanel } from "@/components/common/workspace-panel";
 import { EmptyState } from "@/components/common/empty-state";
-import { QueryState } from "@/components/common/query-state";
+import { QueryState, QueryErrors } from "@/components/common/query-state";
 import { DeleteEntity } from "@/components/common/entity-form";
 import { useCurrentProject } from "@/features/projects/use-current-project";
 import { useScenes } from "@/features/scenes/hooks";
@@ -21,13 +22,14 @@ export function Component() {
     !scripts.data ||
     !scenes.data ||
     !shots.data ||
-    scripts.isError ||
-    scenes.isError ||
-    shots.isError
+    isMissingEntity(scripts.error) ||
+    isMissingEntity(scenes.error) ||
+    isMissingEntity(shots.error)
   )
     return <QueryState queries={[scripts, scenes, shots]} />;
   return (
     <div className="workflow-stack">
+      <QueryErrors queries={[scripts, scenes, shots]} />
       <div className="section-toolbar">
         <div>
           <h2>Script</h2>

@@ -1,3 +1,4 @@
+import { StatusBadge } from "@/components/common/status-badge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useProjects } from "@/features/projects/hooks";
@@ -157,7 +158,7 @@ export function DashboardPage() {
                         <Link key={project.id} to={`/projects/${project.id}`}>
                           <FolderOpen size={16} />
                           <strong>{project.name}</strong>
-                          <Badge>{project.status}</Badge>
+                          <StatusBadge status={project.status} />
                           <ArrowUpRight size={14} />
                         </Link>
                       ))}

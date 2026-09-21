@@ -4,7 +4,18 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Select = Primitive.Root;
-export const SelectValue = Primitive.Value;
+export function SelectValue({
+  className,
+  ...props
+}: ComponentProps<typeof Primitive.Value>) {
+  // Radix deliberately ignores className/style on Value and ItemText.
+  // Own the layout outside those primitives while preserving their text portal.
+  return (
+    <span className={cn("select-value", className)}>
+      <Primitive.Value {...props} />
+    </span>
+  );
+}
 export function SelectTrigger({
   className,
   children,
@@ -16,7 +27,7 @@ export function SelectTrigger({
       {...props}
     >
       {children}
-      <Primitive.Icon>
+      <Primitive.Icon className="select-icon">
         <ChevronDown size={14} />
       </Primitive.Icon>
     </Primitive.Trigger>
@@ -32,13 +43,16 @@ export function SelectContent({
       <Primitive.Content
         position="popper"
         sideOffset={5}
+        collisionPadding={12}
         className={cn("ui-popover select-content", className)}
         {...props}
       >
         <Primitive.ScrollUpButton className="select-scroll">
           <ChevronUp size={14} />
         </Primitive.ScrollUpButton>
-        <Primitive.Viewport>{children}</Primitive.Viewport>
+        <Primitive.Viewport className="select-viewport">
+          {children}
+        </Primitive.Viewport>
         <Primitive.ScrollDownButton className="select-scroll">
           <ChevronDown size={14} />
         </Primitive.ScrollDownButton>
@@ -53,8 +67,13 @@ export function SelectItem({
 }: ComponentProps<typeof Primitive.Item>) {
   return (
     <Primitive.Item className={cn("select-item", className)} {...props}>
-      <Primitive.ItemText>{children}</Primitive.ItemText>
-      <Primitive.ItemIndicator>
+      <span
+        className="select-item-text"
+        title={typeof children === "string" ? children : undefined}
+      >
+        <Primitive.ItemText>{children}</Primitive.ItemText>
+      </span>
+      <Primitive.ItemIndicator className="select-indicator">
         <Check size={14} />
       </Primitive.ItemIndicator>
     </Primitive.Item>

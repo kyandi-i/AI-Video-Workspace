@@ -26,7 +26,7 @@ async function createShot(
   code: string,
   title: string,
 ) {
-  await region.getByRole("button", { name: "创建镜头" }).click();
+  await region.getByRole("button", { name: "创建镜头" }).first().click();
   await page.getByLabel("镜头编号").fill(code);
   await page.getByLabel("镜头标题").fill(title);
   await page.getByLabel("时长（秒）").fill("6.5");
@@ -99,7 +99,7 @@ for (const theme of ["dark", "light"]) {
         .click();
       await page.getByLabel("镜头标题").fill("观察入口");
       await page.getByRole("combobox", { name: "状态", exact: true }).click();
-      await page.getByRole("option", { name: "DONE", exact: true }).click();
+      await page.getByRole("option", { name: "Done", exact: true }).click();
       await save(page);
       await first.getByRole("button", { name: "上移 S02" }).click();
       await expect(first.locator("tbody tr").first()).toHaveAttribute(
@@ -137,11 +137,11 @@ for (const theme of ["dark", "light"]) {
       await page.getByRole("option", { name: "风淋入口", exact: true }).click();
       await expect(page.locator("tbody tr")).toHaveCount(2);
       await page.getByRole("combobox", { name: "状态筛选" }).click();
-      await page.getByRole("option", { name: "DONE", exact: true }).click();
+      await page.getByRole("option", { name: "Done", exact: true }).click();
       await expect(page.locator("tbody tr")).toHaveCount(1);
-      await page.getByRole("textbox", { name: "搜索镜头" }).fill("missing");
+      await page.getByRole("searchbox", { name: "搜索镜头" }).fill("missing");
       await expect(page.locator("tbody tr")).toHaveCount(0);
-      await page.getByRole("textbox", { name: "搜索镜头" }).fill("s02");
+      await page.getByRole("searchbox", { name: "搜索镜头" }).fill("s02");
       await expect(page.locator("tbody tr")).toHaveCount(1);
       await page.getByRole("link", { name: "打开", exact: true }).click();
       await expect(
@@ -157,6 +157,8 @@ for (const theme of ["dark", "light"]) {
       await page.reload();
       await expect(page.getByText("8 秒", { exact: true })).toBeVisible();
       await page.getByRole("link", { name: "返回镜头列表" }).click();
+      await expect(page.locator("tbody tr")).toHaveCount(1);
+      await page.getByRole("button", { name: "清除筛选", exact: true }).click();
       await expect(page.locator("tbody tr")).toHaveCount(3);
       await page.screenshot({
         path: `test-results/phase2-shots-${theme}.png`,

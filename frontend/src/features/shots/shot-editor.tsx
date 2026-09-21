@@ -1,7 +1,8 @@
+import { shotStatusOptions } from "@/lib/status-display";
 import { Button } from "@/components/ui/button";
 import { EntityForm } from "@/components/common/entity-form";
 import { useShotMutations } from "./hooks";
-import { shotStatuses, type Shot, type ShotStatus } from "./types";
+import { type Shot, type ShotStatus } from "./types";
 import type { Scene } from "@/features/scenes/types";
 
 export function ShotEditor({
@@ -56,7 +57,7 @@ export function ShotEditor({
           name: "status",
           label: "状态",
           kind: "select",
-          options: shotStatuses.map((value) => ({ value, label: value })),
+          options: shotStatusOptions,
         },
         { name: "creative_requirement", label: "创作要求", kind: "textarea" },
       ]}

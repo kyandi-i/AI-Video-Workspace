@@ -1,7 +1,8 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { StatusBadge } from "@/components/common/status-badge";
+import { ArrowDown, ArrowUp, ScanLine } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { DeleteEntity } from "@/components/common/entity-form";
 import { notify } from "@/lib/notifications";
 import { ShotEditor } from "./shot-editor";
@@ -14,18 +15,28 @@ export function ShotTable({
   shots,
   allShots = shots,
   scenes,
+  sceneId,
 }: {
   projectId: string;
   shots: Shot[];
   allShots?: Shot[];
   scenes: Scene[];
+  sceneId?: string;
 }) {
+  const location = useLocation();
+  const returnTo = location.pathname + location.search;
   const { remove, move } = useShotMutations(projectId);
   if (!shots.length)
     return (
-      <p className="compact-empty">
-        暂无镜头。创建镜头，或调整搜索和筛选条件。
-      </p>
+      <EmptyState
+        compact
+        icon={ScanLine}
+        title="还没有镜头"
+        description="创建第一个镜头，填写画面内容与创作要求。"
+        action={
+          <ShotEditor projectId={projectId} scenes={scenes} sceneId={sceneId} />
+        }
+      />
     );
   return (
     <div className="table-scroll">
@@ -43,25 +54,36 @@ export function ShotTable({
           {shots.map((shot) => (
             <tr key={shot.id} aria-label={`${shot.shot_code} ${shot.title}`}>
               <td>
-                <Link className="shot-link" to={`/shots/${shot.id}`}>
-                  <span>{shot.shot_code}</span>
-                  <strong>{shot.title}</strong>
+                <Link
+                  className="shot-link"
+                  to={`/shots/${shot.id}`}
+                  state={{ returnTo }}
+                >
+                  <span title={shot.shot_code}>{shot.shot_code}</span>
+                  <strong title={shot.title}>{shot.title}</strong>
                 </Link>
               </td>
               <td>
-                {scenes.find((scene) => scene.id === shot.scene_id)?.name ??
-                  "—"}
+                <span
+                  className="table-scene-name"
+                  title={
+                    scenes.find((scene) => scene.id === shot.scene_id)?.name
+                  }
+                >
+                  {scenes.find((scene) => scene.id === shot.scene_id)?.name ??
+                    "—"}
+                </span>
               </td>
               <td>{shot.duration_seconds}s</td>
               <td>
-                <Badge tone={shot.status === "DONE" ? "success" : "neutral"}>
-                  {shot.status}
-                </Badge>
+                <StatusBadge status={shot.status} />
               </td>
               <td>
                 <div className="row-actions">
                   <Button size="sm" variant="ghost" asChild>
-                    <Link to={`/shots/${shot.id}`}>打开</Link>
+                    <Link to={`/shots/${shot.id}`} state={{ returnTo }}>
+                      打开
+                    </Link>
                   </Button>
                   <ShotEditor
                     projectId={projectId}
@@ -99,7 +121,7 @@ export function ShotTable({
                   ))}
                   <DeleteEntity
                     name={shot.shot_code}
-                    description="该镜头将从场景中移除。"
+                    description={`镜头「${shot.title}」将从场景中移除。`}
                     onDelete={() =>
                       remove.mutateAsync({
                         id: shot.id,

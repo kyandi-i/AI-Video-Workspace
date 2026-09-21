@@ -1,3 +1,4 @@
+import { StatusBadge } from "@/components/common/status-badge";
 import { useState } from "react";
 import { Folder, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -188,7 +189,7 @@ export function Component() {
           <EntityCard
             name="EntityCard 样式样例"
             metadata="通用实体容器"
-            status={<Badge>DRAFT</Badge>}
+            status={<StatusBadge status="DRAFT" />}
           />
         </WorkspacePanel>
       </div>

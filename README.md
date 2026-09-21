@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 2：Project / Script / Scene / Shot。** 已可在深浅色工作台中创建项目、剧本、场景与镜头，编辑、软删除、排序、搜索与筛选，数据保存在本地 SQLite。Asset / Character / Prompt / Storyboard / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)，每次开发只推进一个 Phase。
+**当前完成 Phase 2.5：现有工作流 UX 修正。** 已可在深浅色工作台中创建项目、剧本、场景与镜头，编辑、软删除、排序、搜索与筛选，数据保存在本地 SQLite。Asset / Character / Prompt / Storyboard / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)，每次开发只推进一个 Phase。
 
 ## 环境
 
@@ -100,7 +100,7 @@ start.ps1            # Windows 启动入口
 2. 在 **Script** 创建剧本，再添加场景；场景中可维护描述、固定约束与负面约束。
 3. 在场景中创建镜头，填写项目内唯一的镜头编号、标题、时长、状态与创作要求。
 4. 用上移 / 下移调整场景内镜头顺序；到 **Shots** 按编号或标题搜索，组合场景、状态筛选。
-5. 点击镜头打开基础详情并编辑。**Scenes** 可独立查看场景并展开镜头；**Overview** 显示真实数量。
+5. 点击镜头打开基础详情并编辑，返回时保留来源页面和镜头筛选。**Scenes** 可独立查看场景并展开镜头；**Overview** 显示真实数量。
 
 全部创建、编辑和删除均写入本地数据库。业务数据不进入 localStorage。删除必须确认，Project / Script / Scene 会联动软删除后代；没有永久删除接口或 Recycle Bin 页面。Scene 删除同步软删除 ScriptNode 与 Shot。镜头编号区分大小写，软删除后仍保留唯一占用，可通过恢复接口恢复原记录。
 
@@ -122,6 +122,16 @@ Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title 
 - `POST /api/shots/{id}/move`：`{"direction":"up"}` 或 `{"direction":"down"}`，返回场景内最终顺序，边界移动不改变顺序。
 - 四类资源列表、详情均支持 `include_deleted=true`，默认隐藏软删除记录；`POST /api/{projects|scripts|scenes|shots}/{id}/restore` 恢复记录。恢复后代前必须先恢复父级；恢复父级只恢复同一次级联删除的后代，不恢复此前单独删除的记录。
 - 错误保持 `{code,message,details}`：不存在为 404，镜头编号冲突为 409，跨项目关系为 400，输入验证为 422。
+
+## Phase 2.5 UX 修正
+
+- 修复公共 Select 未选中项被误绝对定位的问题；Trigger / Item 均为 36px，文字与勾选标记各有独立区域。菜单支持键盘导航、长文本省略与视口边界约束。
+- Project / Shot 的状态选项、筛选器与 Badge 共用 `lib/status-display.ts`，通过 `lib/enum-display.ts` 生成 value → label 选项。显示 `Storyboard Prompt Ready` 等友好文案，API 仍提交原始枚举；未来枚举沿用该机制，页面不得自行格式化。
+- 表单单行控件 36px、列表小按钮 / 图标按钮 32px；Textarea 使用多行规格。Dialog 标题 / Footer 固定，字段区滚动；取消在左、保存 / 删除在右，提交中禁用并拦截重复操作。
+- 统一状态 Badge、长标题截断、删除影响说明、Empty / Error 状态；移动镜头原子应用后端返回的顺序。Shots 搜索与筛选保留在 URL，打开镜头并返回无需重新设置。
+- 后端业务模型、API、数据库迁移与依赖保持不变。本次没有新增业务能力，未进入 Asset Library。
+
+截图（隔离测试数据）：[Dark Select](docs/screenshots/phase-2.5-shot-select-dark.png)、[Light Select](docs/screenshots/phase-2.5-shot-select-light.png)、[Project Select](docs/screenshots/phase-2.5-project-select-light.png)、[Shots](docs/screenshots/phase-2.5-shots-dark.png)。完整验收见 [开发状态](DEVELOPMENT_STATUS.md)。
 
 ## UI Foundation
 
@@ -249,7 +259,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 2 已完成；Phase 3（Asset Library）必须等待用户确认后才开始。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 2.5 UX Fix 已完成并暂停；Phase 3（Asset Library）必须等待用户确认后才开始。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

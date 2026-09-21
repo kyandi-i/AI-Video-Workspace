@@ -4,75 +4,62 @@
 
 ## 当前阶段
 
-**Phase 2 · Project / Script / Scene / Shot：已完成。** 本轮用户明确授权 Phase 2；实现止于项目层级核心工作流。Phase 3 尚未开始。
+**Phase 2.5 · UX Fix：已完成并暂停，等待用户确认。Phase 3 尚未开始。**
 
-依据：[计划索引](PROJECT_PLAN.md)、[Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)、[MVP v0.1 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)。
+本次只修现有 Project / Script / Scene / Shot 交互和公共组件，没有新增业务能力，没有修改后端、业务模型、API 契约、迁移或依赖。依据：[计划索引](PROJECT_PLAN.md)、[UI 规范](docs/UI_FOUNDATION.md)、[MVP v0.1 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-## 本阶段实现
+历史验收：[Phase 0](docs/PHASE_0_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)、[Phase 2](docs/PHASE_2_STATUS.md)。Phase 2 的业务规则、软删除范围和存储边界保持不变。
 
-- 新增 projects / scripts / script_nodes / scenes / shots，全部沿用 UUIDMixin、TimestampMixin、SoftDeleteMixin；正式迁移 `0002_core_workflow`，保留 app_settings。
-- 五个 Repository 与四个业务 Service；Route 只解析请求并调用 Service。SQLite / Local-first / Managed Storage 边界保持，没有依赖 create_all，没有改动 StorageProvider 或接入 AI。
-- Scene 创建在事务内同时产生 SCENE 节点。节点外键唯一，Service 检查项目归属和节点类型。Scene 独立维护内容，SCENE 节点的 title / description 留空；场景顺序只在 ScriptNode 中维护。
-- Project / Script / Scene / Shot CRUD、include_deleted、restore，项目真实统计；镜头编号项目内唯一、时长验证、后端上移 / 下移排序、项目级搜索 / 场景 / 状态过滤。
-- 删除 Project / Script 级联软删除后代；**删除 Scene 同步软删除对应 ScriptNode 和有效 Shot**，从所有正常列表及详情隐藏，没有物理删除。恢复只恢复同次删除的后代，保留此前单独删除的状态；批次时间在现有删除时间之后，避免时钟精度与回拨造成误恢复。
-- 镜头编号 trim 后区分大小写，软删除后仍占用编号，恢复不会遇到被新记录抢占的问题；恢复场景 / 单个镜头追加到末尾，顺序连续。
-- `/projects`、Project Overview、Script、Scenes、Shots 和基础 Shot Detail 页面，实际数据库 CRUD。Script 展示可折叠的剧本 → 场景 → 镜头层级，用户不需要接触 ScriptNode。
-- 项目卡片、真实数量、紧凑镜头表格、组合搜索筛选、编辑、排序、删除确认、Dark / Light。Shot Detail 仅基础信息与编辑，没有 Prompt / Storyboard UI。
-- Dialog 即时验证、保存期间禁用字段 / 保存 / 关闭、API 错误、成功 Toast、Skeleton。404 不自动重试；缓存按受影响项目、场景、镜头刷新，级联删除清除已打开的镜头详情缓存。
-- 四个 Feature 各有 api.ts / hooks.ts / types.ts，统一 Query Key Factory。业务页面懒加载；Dashboard 最近更新项目读取数据库。没有业务 localStorage 或虚构记录。
-- 健康 API 的 `phase` 更新为 2。README、计划索引与状态文档已更新，Phase 1.5 验收归档。
+## 修复说明
+
+- **Select 根因修复**：原 `.select-item > span:last-child` 将最后一个 span 当作勾选标记；未选中时 Indicator 不渲染，实际被绝对定位的是 ItemText，造成文字错位、行高塌陷与重叠。现在 Value / ItemText 使用显式布局容器，Indicator 独立定位，不再依赖子元素顺序。Radix 会忽略 Value / ItemText 自身的 className / style，因此样式落在外层容器上。
+- Select Trigger / Item 同为 36px，垂直居中；左右基准 padding 12px，选项右侧额外预留 28px。长文本截断且保留 title，不覆盖勾选图标；hover / focus / selected 各有清晰状态。Content 限制在可用视口内，Viewport 独立滚动。现有项目状态、镜头状态、剧本选择、场景选择和列表筛选全部复用此实现。
+- `lib/status-display.ts` 是 Project / Shot 状态 label 与 tone 的唯一配置；`lib/enum-display.ts` 的 `enumOptions` 保留原始 value，生成友好 label。表单、筛选、Dashboard、项目卡片、列表和详情统一使用配置与 StatusBadge。后端仍接收原始枚举，未来枚举可复用同一机制，本轮没有实现未来业务类型。
+- Input / Select / 默认 Button 统一为 36px，紧凑操作按钮为 32px；统一 12px 字号、20px 行高、6px 圆角、focus ring 与 disabled。Textarea 使用最小 88px 的多行规格，Dark / Light 共用尺寸 token。
+- EntityForm 固定 Header / Footer，正文独立滚动；取消在左、保存在右。保存中禁用字段、关闭及操作按钮，并显示“保存中…”。ref 提交门闩防止 React pending 更新前的重复请求；删除使用相同保护。移除影响 Sheet 高度的后置 Dialog 样式覆盖。
+- Project / Script / Scene / Shot 统一 DeleteEntity 确认模式，显示对象名称和影响范围。Scene 明确说明子 Shot 同时软删除并显示数量；删除按钮使用 Danger 样式。没有改变删除语义。
+- 镜头表格保持 52px 行高；长标题、编号与场景名单行截断，操作区始终预留空间。状态统一使用 StatusBadge，颜色按 Neutral / Accent / Warning / Success 语义划分。
+- 首次请求使用 Skeleton，空列表提供下一步操作，错误显示可读 message 和重试。后台刷新失败保留已成功加载的内容；404 隐藏失效实体。网络及非 JSON 错误使用可读兜底文案。
+- Shots 搜索、场景与状态筛选保持统一控件高度；无匹配结果显示清除筛选入口。筛选写入 URL，打开 S13 后返回能保留上下文；从 Script / Scenes 打开镜头后返回原入口。
+- 上移 / 下移继续由后端决定最终顺序；前端取消过期读取并一次性应用服务端返回列表，避免旧请求覆盖新顺序。边界按钮禁用，没有引入前端排序规则或复杂拖拽。
+
+## 受影响的公共组件
+
+`Select / SelectValue / SelectTrigger / SelectContent / SelectItem`、Input / Textarea / Button 的共享样式、Dialog / Sheet 的布局样式、`EntityForm / Choice / DeleteEntity`、`QueryState / ErrorState / QueryErrors`，以及新增 `StatusBadge` 与枚举显示工具。所有业务表单继续使用既有组件和 TanStack Query。
 
 ## 验收结果
 
-| 检查 | 最终结果 |
+| 检查 | 结果 |
 | --- | --- |
-| ESLint | 通过，无错误 / 警告 |
+| 前端 ESLint | 通过，无错误或警告 |
 | TypeScript + Vite build | 通过 |
+| 浏览器测试：构建模式 | **22/22 通过，无跳过** |
+| 浏览器测试：Vite 开发模式 | **24/24 通过，无跳过** |
 | 后端 pytest | **81/81 通过，无跳过** |
-| Ruff check / format | 通过，42 个文件格式符合要求 |
-| 前端 / 浏览器测试：构建模式 | **17/17 通过，无跳过** |
-| 前端 / 浏览器测试：Vite 开发模式 | **19/19 通过，无跳过** |
-| Alembic CLI upgrade → downgrade 0001 → upgrade | 通过，独立 `.workspace/phase2-migration` |
-| Alembic current / check | `0002_core_workflow (head)`；无 metadata 差异 |
-| 完整 downgrade base → upgrade / autogenerate | pytest 临时数据库通过 |
-| 带业务数据回退 / 已有 Phase 1 设置保留 | 通过；外键检查通过 |
-| 事务回滚 / 1:1 / 跨项目关系 | 通过，注入 Scene 写入失败后无孤立节点 |
-| 并发创建 / 唯一编号 / 连续排序 | 通过，8 个并发请求及同编号冲突验证 |
-| 恢复 / 重复恢复 / 时钟精度 | 通过，之前独立删除的子项不会被误恢复 |
-| 刷新与服务重启持久化 | 浏览器刷新与 FastAPI 重建分别通过 |
-| 页面布局与主题 | 两主题核心流程；1920 / 1280 / 1024 / 390px 无页面水平溢出，表格独立滚动 |
-| 既有功能 | 主题持久化、跨标签、受限存储、连接重试、Workspace 信息 / 复制、公共组件、颜色对比度、路径安全 / 存储回归通过 |
+| Ruff check / format | 通过，42 个文件符合格式 |
+| 迁移回归 | pytest 隔离数据库 upgrade → downgrade → upgrade、autogenerate 与外键检查通过；head 仍为 `0002_core_workflow` |
 | Git whitespace | `git diff --check` 通过 |
-| Git 工作区 | 本阶段代码、测试、文档和截图作为本地提交保存，提交后工作区干净 |
 
-前端测试继续使用既有 Playwright 基础设施，没有增加另一套测试框架。两种启动模式都真实运行后端、SQLite 和 React，覆盖创建 Project → Script → Scene → 多个 Shot，编辑、上移 / 下移、搜索 / 筛选、删除确认、刷新持久化、pending 与 API 冲突；另覆盖级联删除后的浏览器后退行为。
+新增 5 个浏览器用例，覆盖深浅色下选项的几何布局、hover / focus / selected、键盘选择、全部状态友好文案与原始 API value、控件尺寸、固定弹窗区域、长文本、删除影响说明、空结果、导航返回、排序与提交防重。额外模拟后台请求失败，验证旧内容保留和可读错误重试。
 
-旧测试中“仅有基础设施表”的断言按 Phase 2 更新为准确的五张业务表集合；时间戳更新测试改用明确的较早初始时间，继续断言 updated_at 前进，避免依赖 Windows 两次连续调用的时钟精度。没有以跳过测试处理失败。
+既有完整 CRUD、刷新持久化、级联删除后浏览器返回、主题持久化、Workspace 信息与 Sheet、连接重试和公共组件交互全部通过。检查全部现有业务页面，两主题下在 1280px 笔记本宽度、1366 / 1024 × 720 窗口检查弹窗与菜单；既有响应式测试继续覆盖 1920 / 1280 / 1024 / 390px。
 
-## 数据与环境隔离
+测试继续使用既有 Playwright，不增加测试框架。pytest 使用临时 Workspace；浏览器使用 `.workspace/e2e` 隔离配置和数据库，测试服务自动退出。**没有写入用户真实 `D:\AI-Video-Workspace`，没有更改用户 bootstrap 选择。**
 
-- pytest 使用临时 Workspace / Database；Playwright 使用 `.workspace/e2e` 下独立 bootstrap 与数据库，最多 2 workers，测试服务完成后退出。
-- 手动迁移验收只使用 `.workspace/phase2-migration`。**测试未写入用户真实 `D:\AI-Video-Workspace`**，没有修改用户 bootstrap 选择。
-- 正常启动器在下次启动时通过 Alembic 自动将用户当前 Workspace 升到 head；没有在用户数据库上执行回退。
-- 沿用现有 Node / Python / uv / npm 与 D 盘 Playwright 浏览器，没有安装新依赖、清理缓存、移动目录或更换架构。
+## 修复后截图
 
-## 截图
+以下为真实浏览器、隔离 E2E 数据库中的测试记录；长标题用于检查截断，不是产品种子数据。截图已人工检查。
 
-以下为真实 E2E 隔离数据库中的测试项目，明确不是用户生产数据；项目名称带 E2E 标识。已检查深浅色布局、信息密度和文字可读性。
+| 页面 | Dark | Light |
+| --- | --- | --- |
+| Shot 编辑状态 Select | [截图](docs/screenshots/phase-2.5-shot-select-dark.png) | [截图](docs/screenshots/phase-2.5-shot-select-light.png) |
+| Project 编辑状态 Select | [截图](docs/screenshots/phase-2.5-project-select-dark.png) | [截图](docs/screenshots/phase-2.5-project-select-light.png) |
+| Shots 列表与筛选 | [截图](docs/screenshots/phase-2.5-shots-dark.png) | [截图](docs/screenshots/phase-2.5-shots-light.png) |
+| Scene 删除范围确认 | [截图](docs/screenshots/phase-2.5-delete-dark.png) | [截图](docs/screenshots/phase-2.5-delete-light.png) |
 
-- [Dark Script](docs/screenshots/phase-2-script-dark.png)
-- [Light Script](docs/screenshots/phase-2-script-light.png)
-- [Dark Shots](docs/screenshots/phase-2-shots-dark.png)
-- [Light Shots](docs/screenshots/phase-2-shots-light.png)
+## 现有边界
 
-## 当前边界
-
-- 不包含 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI 或复杂 DnD。枚举中的制作状态仅为人工标记。
-- 单进程本地服务；列表当前加载本项目全部数据，尚无分页或虚拟列表。后端提供搜索 / 筛选参数，前端对已加载列表组合过滤。
-- 主 JS chunk 643.25 kB / gzip 201.47 kB，业务路由已拆包；Vite 仍提示主 chunk 超过 500 kB。未提高提示阈值。
-- 沿用的 Zod PURE 注释和 Starlette/httpx、AnyIO 弃用提示仍存在，不阻止构建或测试；本阶段未升级依赖。
-- 只验证 PostgreSQL DDL 可编译，没有连接真实 PostgreSQL；运行数据库保持 SQLite。现有 Storage 文件补偿与缩略图能力边界仍按 Phase 1 记录。
-
-## 下一步
-
-**停在 Phase 2，等待用户明确授权 Phase 3（Asset Library）。**
+- 不含 Asset Library / Character / Prompt / Storyboard / VideoResult 等后续业务；状态只作人工标记。
+- 列表仍读取项目全部记录，没有增加分页、虚拟列表或移动端业务布局。
+- 主 JS chunk 645.64 kB / gzip 202.39 kB，Vite 超过 500 kB 提示仍存在，没有提高阈值。既有 Zod PURE 注释、Python 依赖弃用提示未阻止构建与测试，本次没有升级依赖。
+- **停在 Phase 2.5，等待用户确认，不自动进入 Phase 3。**

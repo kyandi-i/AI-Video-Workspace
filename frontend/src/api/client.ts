@@ -7,15 +7,20 @@ export async function requestJson<T>(
   method = "GET",
   data?: unknown,
 ): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    signal: AbortSignal.timeout(8_000),
-    method,
-    headers:
-      data === undefined ? undefined : { "Content-Type": "application/json" },
-    body: data === undefined ? undefined : JSON.stringify(data),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
+      signal: AbortSignal.timeout(8_000),
+      method,
+      headers:
+        data === undefined ? undefined : { "Content-Type": "application/json" },
+      body: data === undefined ? undefined : JSON.stringify(data),
+    });
+  } catch {
+    throw new Error("无法连接本地服务，请确认服务运行后重试。");
+  }
   if (!response.ok) {
-    let message = `本地服务返回错误（${response.status}）`;
+    let message = "本地服务暂时无法完成操作，请稍后重试。";
     let code = `HTTP_${response.status}`;
     try {
       const body = (await response.json()) as {
@@ -41,3 +46,6 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
+
+export const isMissingEntity = (error: Error | null) =>
+  error instanceof ApiError && error.status === 404;

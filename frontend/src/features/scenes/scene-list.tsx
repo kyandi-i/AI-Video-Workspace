@@ -50,7 +50,7 @@ export function SceneList({
               {String(scene.order_index + 1).padStart(2, "0")}
             </span>
             <div className="scene-title">
-              <h3>{scene.name}</h3>
+              <h3 title={scene.name}>{scene.name}</h3>
               <span>
                 {scene.shot_count} shots ·{" "}
                 {scripts.find((script) => script.id === scene.script_id)?.name}
@@ -69,7 +69,7 @@ export function SceneList({
               />
               <DeleteEntity
                 name={scene.name}
-                description="场景及其所有镜头会一并删除。"
+                description={`场景及其 ${scene.shot_count} 个镜头会一并删除。`}
                 onDelete={() => remove.mutateAsync(scene.id)}
               />
             </div>
@@ -82,6 +82,7 @@ export function SceneList({
               projectId={projectId}
               shots={shots.filter((shot) => shot.scene_id === scene.id)}
               scenes={scenes}
+              sceneId={scene.id}
             />
           )}
         </section>

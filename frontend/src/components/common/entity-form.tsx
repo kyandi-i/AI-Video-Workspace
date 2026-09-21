@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,16 +36,27 @@ export function Choice({
   options,
   onChange,
   id,
+  disabled,
+  invalid,
+  describedBy,
 }: {
   label: string;
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   id?: string;
+  disabled?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger id={id} aria-label={label}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger
+        id={id}
+        aria-label={label}
+        aria-invalid={invalid}
+        aria-describedby={describedBy}
+      >
         <SelectValue placeholder="请选择" />
       </SelectTrigger>
       <SelectContent>
@@ -75,6 +86,7 @@ function Form({
   setPending: (pending: boolean) => void;
 }) {
   const id = useId();
+  const submitting = useRef(false);
   const [values, setValues] = useState(initial);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
@@ -103,7 +115,8 @@ function Form({
         setTouched(
           Object.fromEntries(fields.map((field) => [field.name, true])),
         );
-        if (pending || Object.values(errors).some(Boolean)) return;
+        if (submitting.current || Object.values(errors).some(Boolean)) return;
+        submitting.current = true;
         setPending(true);
         setError("");
         try {
@@ -115,78 +128,88 @@ function Form({
             cause instanceof Error ? cause.message : "保存失败，请重试。",
           );
         } finally {
+          submitting.current = false;
           setPending(false);
         }
       }}
     >
-      <fieldset disabled={pending} className="form-fields">
-        {fields.map((field) => {
-          const controlId = `${id}-${field.name}`;
-          const props = {
-            id: controlId,
-            value: values[field.name] ?? "",
-            required: field.required,
-            maxLength: field.maxLength,
-            "aria-invalid": Boolean(touched[field.name] && errors[field.name]),
-            "aria-describedby":
-              touched[field.name] && errors[field.name]
-                ? `${controlId}-error`
-                : undefined,
-            onBlur: () =>
-              setTouched((current) => ({ ...current, [field.name]: true })),
-            onChange: (
-              event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-            ) => {
-              setValues((current) => ({
-                ...current,
-                [field.name]: event.target.value,
-              }));
-              setTouched((current) => ({ ...current, [field.name]: true }));
-            },
-          };
-          return (
-            <div className="form-field" key={field.name}>
-              <label htmlFor={controlId}>
-                {field.label}
-                {field.required && <span aria-hidden="true"> *</span>}
-              </label>
-              {field.kind === "select" ? (
-                <Choice
-                  id={controlId}
-                  label={field.label}
-                  value={values[field.name] ?? ""}
-                  options={field.options ?? []}
-                  onChange={(value) =>
-                    setValues((current) => ({
-                      ...current,
-                      [field.name]: value,
-                    }))
-                  }
-                />
-              ) : field.kind === "textarea" ? (
-                <Textarea {...props} rows={3} />
-              ) : (
-                <Input
-                  {...props}
-                  type={field.kind === "number" ? "number" : "text"}
-                  min={field.kind === "number" ? 0 : undefined}
-                  step={field.kind === "number" ? "any" : undefined}
-                />
-              )}
-              {touched[field.name] && errors[field.name] && (
-                <span id={`${controlId}-error`} className="field-error">
-                  {errors[field.name]}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </fieldset>
-      {error && (
-        <div role="alert" className="error-banner">
-          {error}
-        </div>
-      )}
+      <div className="form-body">
+        <fieldset disabled={pending} className="form-fields">
+          {fields.map((field) => {
+            const controlId = `${id}-${field.name}`;
+            const props = {
+              id: controlId,
+              value: values[field.name] ?? "",
+              required: field.required,
+              maxLength: field.maxLength,
+              "aria-invalid": Boolean(
+                touched[field.name] && errors[field.name],
+              ),
+              "aria-describedby":
+                touched[field.name] && errors[field.name]
+                  ? `${controlId}-error`
+                  : undefined,
+              onBlur: () =>
+                setTouched((current) => ({ ...current, [field.name]: true })),
+              onChange: (
+                event: React.ChangeEvent<
+                  HTMLInputElement | HTMLTextAreaElement
+                >,
+              ) => {
+                setValues((current) => ({
+                  ...current,
+                  [field.name]: event.target.value,
+                }));
+                setTouched((current) => ({ ...current, [field.name]: true }));
+              },
+            };
+            return (
+              <div className="form-field" key={field.name}>
+                <label htmlFor={controlId}>
+                  {field.label}
+                  {field.required && <span aria-hidden="true"> *</span>}
+                </label>
+                {field.kind === "select" ? (
+                  <Choice
+                    id={controlId}
+                    label={field.label}
+                    value={values[field.name] ?? ""}
+                    options={field.options ?? []}
+                    disabled={pending}
+                    invalid={props["aria-invalid"]}
+                    describedBy={props["aria-describedby"]}
+                    onChange={(value) =>
+                      setValues((current) => ({
+                        ...current,
+                        [field.name]: value,
+                      }))
+                    }
+                  />
+                ) : field.kind === "textarea" ? (
+                  <Textarea {...props} rows={3} />
+                ) : (
+                  <Input
+                    {...props}
+                    type={field.kind === "number" ? "number" : "text"}
+                    min={field.kind === "number" ? 0 : undefined}
+                    step={field.kind === "number" ? "any" : undefined}
+                  />
+                )}
+                {touched[field.name] && errors[field.name] && (
+                  <span id={`${controlId}-error`} className="field-error">
+                    {errors[field.name]}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </fieldset>
+        {error && (
+          <div role="alert" className="error-banner">
+            {error}
+          </div>
+        )}
+      </div>
       <DialogFooter>
         <Button
           type="button"
@@ -228,6 +251,7 @@ export function EntityForm({
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent
+        className="entity-dialog"
         closeDisabled={pending}
         onInteractOutside={(event) => event.preventDefault()}
       >
@@ -262,6 +286,7 @@ export function DeleteEntity({
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const deleting = useRef(false);
   return (
     <Dialog
       open={open}
@@ -273,7 +298,12 @@ export function DeleteEntity({
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" aria-label={`删除 ${name}`}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="destructive-action"
+          aria-label={`删除 ${name}`}
+        >
           删除
         </Button>
       </DialogTrigger>
@@ -301,6 +331,8 @@ export function DeleteEntity({
             variant="destructive"
             disabled={pending}
             onClick={async () => {
+              if (deleting.current) return;
+              deleting.current = true;
               setPending(true);
               setError("");
               try {
@@ -310,6 +342,7 @@ export function DeleteEntity({
               } catch (cause) {
                 setError(cause instanceof Error ? cause.message : "删除失败");
               } finally {
+                deleting.current = false;
                 setPending(false);
               }
             }}

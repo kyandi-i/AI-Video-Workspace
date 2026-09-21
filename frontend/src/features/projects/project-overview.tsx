@@ -1,16 +1,19 @@
+import { isMissingEntity } from "@/api/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { WorkspacePanel } from "@/components/common/workspace-panel";
-import { QueryState } from "@/components/common/query-state";
+import { QueryState, QueryErrors } from "@/components/common/query-state";
 import { useCurrentProject } from "./use-current-project";
 import { useProjectStats } from "./hooks";
 
 export function Component() {
   const project = useCurrentProject();
   const stats = useProjectStats(project.id);
-  if (stats.isPending || stats.isError) return <QueryState queries={[stats]} />;
+  if (!stats.data || isMissingEntity(stats.error))
+    return <QueryState queries={[stats]} />;
   return (
     <>
+      <QueryErrors queries={[stats]} />
       <section className="status-strip" aria-label="项目统计">
         {(
           [

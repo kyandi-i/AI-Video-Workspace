@@ -1,6 +1,12 @@
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
+  --control-height: 36px;
+  --control-height-compact: 32px;
+  --control-radius: 6px;
+  --control-font-size: 12px;
+  --control-line-height: 20px;
+  --control-padding-x: 12px;
   --background: #111517;
   --foreground: #e9eff2;
   --sidebar: #14191c;

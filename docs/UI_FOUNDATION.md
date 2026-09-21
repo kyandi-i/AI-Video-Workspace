@@ -1,6 +1,6 @@
-# Phase 1.5 · UI Foundation
+# UI Foundation · Phase 2.5 修订
 
-本阶段只建立视觉系统、布局和公共组件；没有实现 Project / Asset CRUD、Prompt、AI 或其他业务模块。Dashboard 的项目、镜头、素材和活动区域是明确的空状态，不能视为已经实现对应功能。服务与 Workspace 元数据来自已有真实 GET API。
+视觉基础建立于 Phase 1.5；Phase 2 接入项目层级工作流，Phase 2.5 统一公共组件交互。Project / Script / Scene / Shot 已接入真实数据库；Asset / Prompt / AI 等仍未实现。历史记录见 PHASE_1_5_STATUS.md 和 PHASE_2_STATUS.md。
 
 ## 使用与预览
 
@@ -54,7 +54,7 @@
 | `components/common/media-card.tsx` | MediaCard | 16:9、1:1、3:4；cover / contain；懒加载、缺图及加载失败占位、类型 Badge |
 | `components/common/detail-sheet.tsx` | DetailSheet | 右侧预览、滚动内容、操作；焦点约束、关闭后回到触发控件 |
 | `components/ui/button.tsx` | Button | primary / secondary / ghost / destructive，sm / icon，asChild |
-| `components/ui/input.tsx` 等 | Input / SearchInput / Textarea / Select / Checkbox / Switch | 统一 34px 单行高度、焦点、禁用与键盘行为 |
+| `components/ui/input.tsx` 等 | Input / SearchInput / Textarea / Select / Checkbox / Switch | Input / Select 36px；Textarea 多行；明确焦点、禁用与键盘行为 |
 | `components/ui/badge.tsx` | Badge | neutral / accent / success / warning / danger |
 | `components/ui/tabs.tsx` | Tabs | 紧凑下划线选中态、方向键导航 |
 | `components/ui/dialog.tsx` / `sheet.tsx` | Dialog / Sheet | 标题、描述、关闭按钮、Esc 与 modal 焦点管理 |
@@ -77,7 +77,7 @@
 
 - 只使用 lucide-react 命名导入，保持 SVG Components / tree shaking；无远程图标 API、CDN、PNG/JPG 图标集。
 - 新增直接依赖：Radix dialog、tabs、select、checkbox、switch、dropdown-menu、tooltip、separator、scroll-area，以及 sonner。Slot 沿用原依赖；共享 Radix 包由 npm 去重。
-- 所有新增 primitive 都有实际产品或开发验收调用。Select / Checkbox / Switch 和实体媒体 Card 尚未接入业务页面，这是本阶段基础组件的范围；生产 tree shaking 会去除仅在开发验收页引用的 JS。
+- 公共 primitive 均有产品或开发验收调用；Select 已用于状态、剧本、场景与筛选。生产 tree shaking 去除只在开发验收页引用的 JS。
 - 锁文件随版本更新；安装时 npm audit 为 0 vulnerabilities。没有清理、迁移或卸载任何原有依赖 / 缓存。
 - Playwright worker 固定为 2，避免本机默认按 CPU 核心启动过多浏览器测试进程。
 - 最终生产包大小和资源增量见开发状态；Vite 大于 500 kB 的单 chunk 提示作为后续按业务页面拆包的优化项，不通过提高阈值隐藏。
@@ -90,4 +90,24 @@ Dark / Light 检查前景/背景、Panel、Card、次要文字、Sidebar、Accen
 
 截图见 `docs/screenshots/phase-1.5-*`；正式页面使用本机真实 Workspace，组件页明确标注为开发验收样例。
 
-本阶段结束后停止，等待用户确认 Phase 2。
+Phase 2.5 已完成并暂停，等待用户确认；不自动进入 Phase 3。
+
+## Phase 2.5 控件与枚举规范
+
+| Token / 部位 | 规则 |
+| --- | --- |
+| control-height | 36px：Input、Select Trigger / Item、默认 Button |
+| control-height-compact | 32px：表格小按钮与图标按钮 |
+| control-radius / font-size / line-height | 6px / 12px / 20px，两主题相同 |
+| control-padding-x | 12px；Select Item 为右侧勾选标记额外保留 28px |
+| Textarea | 最小 88px，多行 line-height 20px，padding 8px 12px |
+| Select | Value / ItemText 外有独立布局容器；Indicator 独立 class，不使用子元素位置猜测。Viewport 独立滚动，菜单受可用视口限制 |
+| Dialog 表单 | 固定 Header / Footer，form-body 内滚动；提交时 ref 门闩阻止重复请求，同时禁用控件与关闭操作 |
+| Sheet | 沿用 Dialog 标题与操作样式，独立滚动正文；移除后置 ui-dialog 样式对 Sheet 高度的覆盖 |
+| 状态 | lib/status-display.ts 唯一配置 label / tone，lib/enum-display.ts 的 enumOptions 生成原始 value + 显示 label；StatusBadge 统一呈现 |
+
+颜色语义：Draft / Archived 为 Neutral，进行中 / 就绪为 Accent，Paused / Review 为 Warning，Completed / Done 为 Success。Destructive 删除使用 Danger；不按每个状态分配任意颜色。未来新增枚举必须提供完整的显示映射并复用 enumOptions，不在页面中拆下划线生成标签。
+
+现有业务表单使用 EntityForm / DeleteEntity，取消始终在左、保存或确认删除在右。表格保持 52px 行高，小按钮与图标按钮同高；长标题 / 场景名单行截断并保留完整 title。操作区常驻，不在 hover 时改变布局。
+
+浏览器几何验收同时检查选项高度、文字垂直中心、文字与勾选图标间距、菜单边界、控件字体 / 圆角 / 高度、Dialog 固定区域、长标题行高。截图见 `docs/screenshots/phase-2.5-*`，使用隔离 E2E Workspace 的测试记录。

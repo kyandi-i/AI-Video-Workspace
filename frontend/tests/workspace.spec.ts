@@ -1,5 +1,73 @@
 import { test, expect } from "@playwright/test";
 
+test("settings switches through the existing API and clears the old workspace view", async ({
+  page,
+}) => {
+  // Mock this UI contract so parallel E2E workers never switch their shared server.
+  let selected = "A:/isolated-workspace";
+  let writes = 0;
+  await page.route("**/api/settings/workspace", async (route) => {
+    if (route.request().method() === "PUT") {
+      writes++;
+      selected = route.request().postDataJSON().workspace_root;
+    }
+    await route.fulfill({
+      json: {
+        workspace_root: selected,
+        database_path: `${selected}/data/workspace.db`,
+        initialized: true,
+      },
+    });
+  });
+  await page.goto("/settings");
+  await expect(
+    page.getByText("A:/isolated-workspace", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/不会搬迁当前文件/)).toBeVisible();
+  await page.getByLabel("新工作空间的绝对路径").fill("B:/isolated-workspace");
+  await page.getByRole("button", { name: "保存并切换工作空间" }).click();
+  await expect(
+    page.getByText("B:/isolated-workspace", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("新工作空间的绝对路径")).toHaveValue("");
+  expect(writes).toBe(1);
+});
+
+test("workspace switch failure keeps the selection and permits retry", async ({
+  page,
+}) => {
+  await page.route("**/api/settings/workspace", async (route) => {
+    if (route.request().method() === "GET") return route.continue();
+    await route.fulfill({
+      status: 400,
+      json: {
+        code: "WORKSPACE_INVALID",
+        message: "请选择有效的绝对路径。",
+        details: {},
+      },
+    });
+  });
+  await page.goto("/settings");
+  const original = await page
+    .locator(".metadata-list .path-value")
+    .first()
+    .textContent();
+  await page.getByLabel("新工作空间的绝对路径").fill("../invalid");
+  await page.getByRole("button", { name: "保存并切换工作空间" }).click();
+  await expect(
+    page.getByText("请选择有效的绝对路径。", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "保存并切换工作空间" }),
+  ).toBeEnabled();
+  await expect(page.getByLabel("新工作空间的绝对路径")).toHaveValue(
+    "../invalid",
+  );
+  await expect(page.locator(".metadata-list .path-value").first()).toHaveText(
+    original!,
+  );
+});
+
 test("real local services, honest empty states, and local SVG icons", async ({
   page,
 }) => {

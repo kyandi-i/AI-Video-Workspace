@@ -1,6 +1,6 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 3 — Asset Library，已完成，等待用户验收。**
+当前开发阶段：**Phase 3.1 — Workspace Migration，已完成，等待用户验收。Phase 4 未开始。**
 
 ## 依据
 
@@ -10,6 +10,13 @@
 4. [开发状态](DEVELOPMENT_STATUS.md)：当前能力与验收记录；[Phase 0](docs/PHASE_0_STATUS.md) / [Phase 1](docs/PHASE_1_STATUS.md) 已归档。
 5. [资源审计](docs/RESOURCE_AUDIT_2026-09-20.md)：Phase 1.5 前只读基线。用户明确确认“审计完成后立即执行 Phase 1.5”。
 6. [Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)：用户本轮授权的项目层级业务闭环与验收映射；[Phase 1.5 历史状态](docs/PHASE_1_5_STATUS.md)。
+
+## Phase 3.1 范围
+
+- 完整 COPY / SHA-256 VERIFY / 既有 BootstrapConfig / 启动验证；真实 Workspace 从 C 盘迁至 D 盘，保留旧 C 副本。
+- 复用现有 WorkspaceService 与切换 API；Settings 增加最小路径切换入口，Switch 不等于自动 Migrate。
+- 相对 Asset / thumbnail 路径不重写，数据库结构不变；隔离测试覆盖复制、切换、重启、新上传与原目录不变。
+- 完成报告见 [Phase 3.1 验收](docs/PHASE_3_1_STATUS.md)；[Phase 3 历史状态](docs/PHASE_3_STATUS.md)。本阶段完成后停止。
 
 ## Phase 3 范围
 

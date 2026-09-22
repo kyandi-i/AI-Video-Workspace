@@ -4,6 +4,7 @@ import { WorkspacePanel } from "@/components/common/workspace-panel";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme";
 import { WorkspaceMetadata } from "./workspace-info";
+import { WorkspaceSwitch } from "./workspace-switch";
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -39,6 +40,12 @@ export function SettingsPage() {
           description="当前目录与存储状态，仅供查看。"
         >
           <WorkspaceMetadata />
+        </WorkspacePanel>
+        <WorkspacePanel
+          title="切换工作空间"
+          description="打开其他本地工作空间。"
+        >
+          <WorkspaceSwitch />
         </WorkspacePanel>
       </div>
     </div>

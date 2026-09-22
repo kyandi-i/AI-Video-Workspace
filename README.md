@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 3：Asset Library。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。Character / Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
+**当前完成 Phase 3.1：Workspace Migration。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。Character / Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
 
 ## 环境
 
@@ -136,16 +136,32 @@ Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title 
 ## UI Foundation
 
 - 默认 Dark，Topbar 与 Settings 可切换 Light。浏览器 localStorage 只保存 `avw.ui.theme`；业务数据仍保存到 Workspace。
-- Dashboard 展示真实连接、存储状态和最近更新项目；Projects 进入实际项目业务。Settings 提供主题切换与只读工作空间信息。
+- Dashboard 展示真实连接、存储状态和最近更新项目；Projects 进入实际项目业务。Settings 提供主题切换、工作空间信息与绝对路径输入切换。切换复用原有 API，不自动迁移文件。
 - 公共视觉规则、完整 Token 表和组件 API 见 [UI Foundation](docs/UI_FOUNDATION.md)。颜色统一维护于 `frontend/src/styles/tokens.css`，组件源码位于 `frontend/src/components/ui` 与 `components/common`。
 - 开发模式可访问 <http://127.0.0.1:5173/__ui> 验收基础组件。该路由在生产构建中不可用。
 - Phase 2 截图（独立 E2E 测试项目）：[Dark Script](docs/screenshots/phase-2-script-dark.png)、[Light Shots](docs/screenshots/phase-2-shots-light.png)。历史 UI Foundation：[Dark](docs/screenshots/phase-1.5-dark.png)、[Light](docs/screenshots/phase-1.5-light.png)。[资源审计报告](docs/RESOURCE_AUDIT_2026-09-20.md) 为 UI 开发前的基线，资源变化见开发状态。
 
 ## 本机资源路径
 
-- 当前业务 Workspace Root：`D:\AI-Video-Workspace`。启动配置仍由用户级 Bootstrap Config 管理，但两个 Windows 配置位置都已指向该 D 盘目录；原 `C:\Users\Lenovo\AI-Video-Workspace` 保留为迁移前副本，不再作为当前业务 Workspace 使用。
+- 当前业务 Workspace Root：`D:\AI-Video-Workspace`。2026-09-22 的 Phase 3.1 已完整复制并验证 C 盘真实 Phase 3 数据，随后通过既有 BootstrapConfig 保存选择。此前 Bootstrap 虽指向 D，但 D 只有 Phase 1 空库，旧文档“迁移完成”的说法不准确。原 `C:\Users\Lenovo\AI-Video-Workspace` 现仅作安全副本保留，未经用户确认不得删除。详见 [迁移验收](docs/PHASE_3_1_STATUS.md)。
 - Playwright 浏览器：`D:\study\DO\DevCache\playwright`。`npm test` 和 `npm run test:install` 都通过项目级脚本固定该路径；`frontend/playwright.config.ts` 也为直接测试命令设置同一环境变量。
 - 重新安装当前 Chromium 时运行 `npm --prefix frontend run test:install`。本次未删除 C 盘既有 `ms-playwright`，因为其中可能包含其他项目使用的版本。
+
+## 安全迁移 Workspace
+
+Settings 中输入目标绝对路径并“保存并切换工作空间”，调用现有 `PUT /api/settings/workspace`。成功后重新载入页面，清空旧 Workspace 查询缓存；失败保留当前选择与输入。空目录会初始化为空 Workspace，这属于 **Switch Workspace**，不会自动复制数据。
+
+迁移已有 Workspace 时按顺序操作：
+
+1. 停止所有使用该 Workspace 的应用进程，确认数据库没有写入。
+2. 清点整个目录；若目标已有内容，先备份并确认，不能盲目合并或覆盖其他 Workspace。
+3. 完整 COPY 所有文件、子目录（包括 data、storage、temp、exports、backups 及未知扩展名），保留源目录。
+4. 比较文件清单、大小和 SHA-256，至少校验 workspace.db；数据库 Asset 路径必须为 Workspace 相对路径，发现绝对路径应停止并报告。
+5. 校验通过后，通过现有 BootstrapConfig 或 Settings 切换到副本，不在数据库中存放定位自己的 root。
+6. 重启，核对实际数据库 / 文件解析、原有数据和一次新上传，新文件应仅写入目标目录；清理该人工测试资产。
+7. 保留旧 Workspace，等待用户确认后才可删除。
+
+本阶段未新增自动迁移 API 或 Workspace Manager，也未硬编码产品根目录。pytest、Playwright、Alembic 回退回升必须同时隔离 Bootstrap 与 Workspace，不能使用真实业务目录。
 
 ## 配置与数据
 
@@ -298,7 +314,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 3 Asset Library 已完成并暂停；Phase 4（Character / CharacterState）必须等待用户验收确认后才开始。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 3.1 Workspace Migration 已完成并暂停；Phase 4（Character / CharacterState）必须等待用户验收确认后才开始。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

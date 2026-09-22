@@ -1,4 +1,6 @@
+import hashlib
 import io
+import shutil
 from uuid import UUID, uuid4
 
 import av
@@ -375,3 +377,92 @@ def test_delete_original_source_does_not_affect_import(workspace, tmp_path):
     source.unlink()
     path, _ = StorageService(workspace).file(result.id)
     assert path.read_bytes() == data
+
+
+@pytest.mark.parametrize("restart", [False, True])
+def test_copied_workspace_switch_preserves_assets_and_routes_new_writes(
+    settings, tmp_path, restart
+):
+    """Exercise the real switch API against two isolated, fully copied workspaces."""
+    source = settings.resolved_workspace_root
+    target = tmp_path / "copied-workspace"
+    assert source.is_relative_to(tmp_path)
+    assert settings.bootstrap_config_path.is_relative_to(tmp_path)
+    with TestClient(create_app(settings)) as client:
+        original = upload(client).json()
+        project = client.post("/api/projects", json={"name": "Migration"}).json()
+        script = client.post(
+            f"/api/projects/{project['id']}/scripts", json={"name": "Script"}
+        ).json()
+        scene = client.post(
+            f"/api/projects/{project['id']}/scenes",
+            json={"name": "Scene", "script_id": script["id"]},
+        ).json()
+        shot = client.post(
+            f"/api/scenes/{scene['id']}/shots",
+            json={"project_id": project["id"], "shot_code": "S01", "title": "Shot"},
+        ).json()
+        tag = client.post("/api/tags", json={"name": "Preserved"}).json()
+        url = f"/api/assets/{original['id']}"
+        assert client.post(f"{url}/tags/{tag['id']}").status_code == 200
+        for owner, entity in (("projects", project), ("shots", shot)):
+            assert (
+                client.post(
+                    f"/api/{owner}/{entity['id']}/assets", json={"asset_id": original["id"]}
+                ).status_code
+                == 200
+            )
+        detail = client.get(url).json()
+        thumbnail = client.get(url + "/thumbnail").content
+    for relative in ("exports/unknown.custom", "backups/snapshot.bin", "storage/temp/keep.partial"):
+        (source / relative).write_bytes(b"managed content")
+
+    def snapshot(root):
+        return {
+            p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in root.rglob("*")
+            if p.is_file()
+        }
+
+    before = snapshot(source)
+    shutil.copytree(source, target)
+    assert snapshot(target) == before
+    with TestClient(create_app(settings)) as client:
+        response = client.put("/api/settings/workspace", json={"workspace_root": str(target)})
+        assert response.status_code == 200
+        assert response.json()["database_path"] == str(target / "data/workspace.db")
+
+        def verify(active):
+            workspace = active.app.state.workspace
+            assert workspace.get_workspace_root() == target
+            with workspace.session() as session:
+                actual = session.execute(text("PRAGMA database_list")).one()[2]
+                assert actual.replace("\\", "/") == (target / "data/workspace.db").as_posix()
+            assert workspace.get_temp_path() == target / "storage/temp"
+            assert workspace.get_export_path() == target / "exports"
+            assert workspace.get_backup_path() == target / "backups"
+            assert active.get(url).json() == detail
+            assert active.get(url + "/file").content == picture()
+            assert active.get(url + "/thumbnail").content == thumbnail
+            from app.services.storage.service import StorageService
+
+            storage = StorageService(workspace)
+            assert storage.file(UUID(original["id"]))[0] == target / original["storage_path"]
+            assert (
+                storage.file(UUID(original["id"]), thumbnail=True)[0]
+                == target / original["thumbnail_path"]
+            )
+            new = upload(active, filename="after-switch.png").json()
+            for field in ("storage_path", "thumbnail_path"):
+                assert new[field].startswith("storage/")
+                assert (target / new[field]).is_file()
+                assert not (source / new[field]).exists()
+            assert snapshot(source) == before
+
+        if not restart:
+            verify(client)
+    if restart:
+        # The original Settings seed still points to A; persisted bootstrap must win.
+        with TestClient(create_app(settings)) as client:
+            verify(client)
+    assert snapshot(source) == before

@@ -37,9 +37,21 @@ class AssetRead(Read):
     tags: list[TagRead] = []
 
 
+class CharacterReference(Read):
+    project_id: UUID
+    name: str
+
+
+class StateReference(Read):
+    character_id: UUID
+    name: str
+
+
 class AssetDetail(AssetRead):
     projects: list[ProjectRead] = []
     shots: list[ShotRead] = []
+    characters: list[CharacterReference] = []
+    character_states: list[StateReference] = []
 
 
 class AssetLinkCreate(Input):

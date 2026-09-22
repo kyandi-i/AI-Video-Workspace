@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/common/entity-form";
 import { assetTypeOptions } from "./display";
 import { useAssetActions } from "./hooks";
-import type { AssetType } from "./types";
+import type { Asset, AssetType } from "./types";
 
 type ImportItem = {
   name: string;
   state: "waiting" | "working" | "done" | "error";
   message?: string;
 };
-export function ImportAssets() {
+export function ImportAssets({
+  onImported,
+}: { onImported?: (asset: Asset) => Promise<unknown> } = {}) {
   const input = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
   const [pending, setPending] = useState(false);
@@ -36,10 +38,19 @@ export function ImportAssets() {
         try {
           if (file.size > 512 * 1024 * 1024)
             throw new Error("单个文件不能超过 512 MiB。");
-          await actions.upload(
+          const imported = await actions.upload(
             file,
             type === "auto" ? undefined : (type as AssetType),
           );
+          if (onImported) {
+            try {
+              await onImported(imported as Asset);
+            } catch (cause) {
+              throw new Error(
+                `素材已导入 Asset Library，但绑定失败，请用 Bind Asset 重试。${cause instanceof Error ? cause.message : ""}`,
+              );
+            }
+          }
           entries[index] = { name: file.name, state: "done" };
         } catch (error) {
           entries[index] = {

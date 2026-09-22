@@ -14,6 +14,7 @@ from app.repositories.workflow import (
     ShotRepository,
 )
 from app.schemas.workflow import SceneRead
+from app.services.character_lifecycle import CharacterLifecycle
 
 
 def atomic(method):
@@ -39,6 +40,7 @@ class WorkflowService:
         self.nodes = ScriptNodeRepository(session)
         self.scenes = SceneRepository(session)
         self.shots = ShotRepository(session)
+        self.character_lifecycle = CharacterLifecycle(session)
 
     def deletion_timestamp(self):
         # The shared timestamp is also a cascade marker. Ensure distinct operations
@@ -89,6 +91,7 @@ class WorkflowService:
 
     def delete_scene_tree(self, scene, timestamp):
         for shot in self.shots.matching(scene_id=scene.id):
+            self.character_lifecycle.delete_shot(shot.id, timestamp)
             self.shots.mark_deleted(shot, timestamp)
         node = self.nodes.get(scene.script_node_id)
         self.scenes.mark_deleted(scene, timestamp)
@@ -154,6 +157,7 @@ class ProjectService(WorkflowService):
     def delete_project(self, identifier):
         project = self.project(identifier)
         timestamp = self.deletion_timestamp()
+        self.character_lifecycle.delete_project(identifier, timestamp)
         for script in self.scripts.matching(project_id=identifier):
             self.delete_script_tree(script, timestamp)
         self.projects.mark_deleted(project, timestamp)
@@ -164,6 +168,7 @@ class ProjectService(WorkflowService):
         timestamp = project.deleted_at
         if timestamp is not None:
             self.projects.restore(project)
+            self.character_lifecycle.restore_project(identifier, timestamp)
             for script in self.scripts.matching(project_id=identifier, include_deleted=True):
                 if script.deleted_at == timestamp:
                     self.restore_script_tree(script)
@@ -299,7 +304,9 @@ class ShotService(WorkflowService):
     @atomic
     def soft_delete_shot(self, identifier):
         shot = self.shot(identifier)
-        self.shots.mark_deleted(shot, self.deletion_timestamp())
+        timestamp = self.deletion_timestamp()
+        self.character_lifecycle.delete_shot(identifier, timestamp)
+        self.shots.mark_deleted(shot, timestamp)
         self.normalize_shots(shot.scene_id)
 
     @atomic

@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.assets import router as assets_router
+from app.api.routes.characters import router as characters_router
 from app.api.routes.health import router as health_router
 from app.api.routes.settings import router as settings_router
 from app.api.routes.workflow import router as workflow_router
@@ -39,6 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(settings_router, prefix="/api")
     app.include_router(workflow_router, prefix="/api")
     app.include_router(assets_router, prefix="/api")
+    app.include_router(characters_router, prefix="/api")
 
     dist = settings.frontend_dist.resolve()
 

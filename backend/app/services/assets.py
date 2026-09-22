@@ -41,10 +41,13 @@ class AssetService(WorkflowService):
     def detail(self, identifier, include_deleted=False):
         asset = self.read_many([self.asset(identifier, include_deleted)])[0]
         projects, shots = self.assets.references(identifier)
+        characters, states = self.assets.character_references(identifier)
         return AssetDetail(
             **asset.model_dump(),
             projects=[ProjectRead.model_validate(item) for item in projects],
             shots=[ShotRead.model_validate(item) for item in shots],
+            characters=characters,
+            character_states=states,
         )
 
     @staticmethod
@@ -68,12 +71,18 @@ class AssetService(WorkflowService):
     def delete_asset(self, identifier):
         asset = self.asset(identifier)
         projects, shots = self.assets.references(identifier)
-        if projects or shots:
+        characters, states = self.assets.character_references(identifier)
+        if projects or shots or characters or states:
             raise AppError(
                 "ASSET_IN_USE",
-                "资产仍被项目或镜头引用，请先解除绑定再删除。",
+                "资产仍被项目或镜头引用，或被角色 / 角色状态引用，请先解除绑定再删除。",
                 409,
-                {"projects": len(projects), "shots": len(shots)},
+                {
+                    "projects": len(projects),
+                    "shots": len(shots),
+                    "characters": len(characters),
+                    "character_states": len(states),
+                },
             )
         self.assets.soft_delete(asset)
 

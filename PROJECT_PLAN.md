@@ -1,6 +1,6 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 3.1 — Workspace Migration，已完成，等待用户验收。Phase 4 未开始。**
+当前开发阶段：**Phase 4 — Character / CharacterState，已完成，等待用户验收；不进入 Phase 5。**
 
 ## 依据
 
@@ -10,6 +10,15 @@
 4. [开发状态](DEVELOPMENT_STATUS.md)：当前能力与验收记录；[Phase 0](docs/PHASE_0_STATUS.md) / [Phase 1](docs/PHASE_1_STATUS.md) 已归档。
 5. [资源审计](docs/RESOURCE_AUDIT_2026-09-20.md)：Phase 1.5 前只读基线。用户明确确认“审计完成后立即执行 Phase 1.5”。
 6. [Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)：用户本轮授权的项目层级业务闭环与验收映射；[Phase 1.5 历史状态](docs/PHASE_1_5_STATUS.md)。
+
+## Phase 4 范围
+
+- Project → Character → CharacterState；独立角色身份 / 视觉状态，参考媒体仍为统一 Asset。
+- Character / State CRUD、顺序、软删除恢复、两类资产绑定、Shot N:N 状态绑定与同角色冲突保护。
+- 项目 Characters 页面、角色详情、State 管理、AssetPicker、Shot Detail 基础绑定；复用现有 UI / Storage / API 分层。
+- 迁移 0004_characters、Asset 引用保护扩展、Project / Scene / Shot 删除关系一致性、隔离完整回归与真实 SPF 验收。
+- 本轮用户明确采用 Project scope、简单 description / notes，不增加原规格中的结构化 appearance_constraints；本轮要求优先。
+- 详细字段、API、验收和限制见 [Phase 4 状态](docs/PHASE_4_STATUS.md)。完成后停止，不实现 Phase 5。
 
 ## Phase 3.1 范围
 
@@ -44,4 +53,4 @@
 
 Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-完成本阶段后暂停。**Phase 4 必须获得用户确认，不自动进入。**
+完成本阶段后暂停。**Phase 5 必须获得用户确认，不自动进入。**

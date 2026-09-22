@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   FolderOpen,
   Images,
-  UsersRound,
   FileText,
   Settings2,
   HardDrive,
@@ -23,7 +22,6 @@ import { useTheme } from "@/lib/theme";
 import { useHealth } from "@/features/dashboard/use-health";
 
 const navigation = [
-  { label: "Characters", icon: UsersRound },
   { label: "Prompt Templates", icon: FileText },
 ];
 

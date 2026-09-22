@@ -84,8 +84,12 @@ function Content({ asset, close }: { asset: AssetDetail; close: () => void }) {
         <DeleteEntity
           name={asset.name}
           description={
-            asset.projects.length + asset.shots.length > 0
-              ? `仍有 ${asset.projects.length} 个项目、${asset.shots.length} 个镜头引用，请先解除绑定。`
+            asset.projects.length +
+              asset.shots.length +
+              asset.characters.length +
+              asset.character_states.length >
+            0
+              ? `仍有 ${asset.projects.length} 个项目、${asset.shots.length} 个镜头、${asset.characters.length} 个角色、${asset.character_states.length} 个状态引用，请先解除绑定。`
               : "原文件与缩略图会保留，不会永久删除。"
           }
           onDelete={async () => {
@@ -115,6 +119,24 @@ function Content({ asset, close }: { asset: AssetDetail; close: () => void }) {
         <dt>更新时间</dt>
         <dd>{new Date(asset.updated_at).toLocaleString()}</dd>
       </dl>
+      <section className="asset-detail-section">
+        <h3>Characters / States using this asset</h3>
+        {!asset.characters.length && !asset.character_states.length && (
+          <p>尚无角色引用</p>
+        )}
+        {asset.characters.map((item) => (
+          <Link
+            className="back-link"
+            key={item.id}
+            to={`/projects/${item.project_id}/characters/${item.id}`}
+          >
+            {item.name} →
+          </Link>
+        ))}
+        {asset.character_states.map((item) => (
+          <p key={item.id}>State: {item.name}（请在角色详情解除绑定）</p>
+        ))}
+      </section>
       <section className="asset-detail-section">
         <h3>Tags</h3>
         <div className="asset-tags">

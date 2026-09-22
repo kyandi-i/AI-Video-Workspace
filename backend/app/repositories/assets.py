@@ -1,11 +1,32 @@
 from sqlalchemy import select
 
 from app.models.assets import Asset, AssetTag, ProjectAssetLink, ShotAssetLink, Tag
+from app.models.characters import (
+    Character,
+    CharacterAssetLink,
+    CharacterState,
+    CharacterStateAssetLink,
+)
 from app.models.workflow import Project, Shot
 from app.repositories.workflow import WorkflowRepository
 
 
 class AssetRepository(WorkflowRepository):
+    def character_references(self, identifier):
+        return tuple(
+            list(
+                self.session.scalars(
+                    select(owner)
+                    .join(link)
+                    .where(link.asset_id == identifier, link.deleted_at.is_(None))
+                )
+            )
+            for owner, link in (
+                (Character, CharacterAssetLink),
+                (CharacterState, CharacterStateAssetLink),
+            )
+        )
+
     def __init__(self, session):
         super().__init__(session, Asset)
 

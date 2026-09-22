@@ -1,3 +1,4 @@
+import { ShotCharacters } from "@/features/characters/shot-characters";
 import { isMissingEntity } from "@/api/client";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -74,6 +75,7 @@ function Detail({ shot }: { shot: Shot }) {
           </div>
         </dl>
       </WorkspacePanel>
+      <ShotCharacters shotId={shot.id} projectId={shot.project_id} />
       <EmptyState
         compact
         icon={ScanLine}

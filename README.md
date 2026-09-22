@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 3.1：Workspace Migration。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。Character / Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
+**当前完成 Phase 4：Character / CharacterState。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。已支持项目角色、视觉状态、参考资产与镜头状态绑定。Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
 
 ## 环境
 
@@ -78,14 +78,14 @@ backend/
     schemas/          # Pydantic 请求/响应契约
     repositories/     # BaseRepository + 各业务 Repository，默认忽略软删除记录
     services/         # Workflow / AssetService / Workspace；storage/ Service 与 Provider
-    migrations/       # 0001_app_settings → 0002_core_workflow → 0003_asset_library
+    migrations/       # 0001_app_settings → 0002_core_workflow → 0003_asset_library → 0004_characters
   tests/
 frontend/
   src/
     app/              # Router、Query Provider
     api/              # API 客户端
     components/       # 布局和 shadcn/ui 基础组件
-    features/         # dashboard/settings/projects/scripts/scenes/shots/assets
+    features/         # dashboard/settings/projects/scripts/scenes/shots/assets/characters
     lib/
   tests/              # Playwright 浏览器验收
 scripts/start.py      # 本地启动和子进程清理
@@ -123,6 +123,18 @@ Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title 
 - 四类资源列表、详情均支持 `include_deleted=true`，默认隐藏软删除记录；`POST /api/{projects|scripts|scenes|shots}/{id}/restore` 恢复记录。恢复后代前必须先恢复父级；恢复父级只恢复同一次级联删除的后代，不恢复此前单独删除的记录。
 - 错误保持 `{code,message,details}`：不存在为 404，镜头编号冲突为 409，跨项目关系为 400，输入验证为 422。
 
+## Characters / Character States
+
+1. 从项目导航或 Overview 打开 **Characters**，创建角色身份，填写描述与长期约束 / 备注。
+2. 打开角色详情，在 **Character Reference Assets** 绑定已有 Asset，或用 Import Asset 托管导入并自动绑定。
+3. 创建角色的视觉状态，维护名称、描述、参考素材；使用上移 / 下移调整顺序。
+4. 在现有 Shot Detail 的 **Characters** 区域选择角色和状态，点击 **Add Character State**。同镜头可有多个角色，每个角色只允许一个状态，且必须属于同一项目。
+5. 被镜头使用的状态不能单独删除。删除角色会级联删除状态并解除关系，不删除 Asset；恢复只恢复同次删除的状态，参考和镜头关系需重新绑定。角色及状态列表提供“显示已删除 / 恢复”。
+
+Character 是身份，CharacterState 是视觉阶段，实际图片 / 视频仍统一为 Asset。名称在项目 / 角色内唯一，区分大小写，软删除后保留占用。Asset 删除保护已包含 Character / State 引用。无新依赖。
+
+新增 API 与模型字段、删除规则、135项后端 / 31项生产浏览器 / 33项开发浏览器验收及两种主题截图见 [Phase 4 状态](docs/PHASE_4_STATUS.md)。本阶段只给 Shot Detail 增加基础绑定入口，未实现 Phase 5 Workspace。
+
 ## Phase 2.5 UX 修正
 
 - 修复公共 Select 未选中项被误绝对定位的问题；Trigger / Item 均为 36px，文字与勾选标记各有独立区域。菜单支持键盘导航、长文本省略与视口边界约束。
@@ -143,7 +155,7 @@ Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title 
 
 ## 本机资源路径
 
-- 当前业务 Workspace Root：`D:\AI-Video-Workspace`。2026-09-22 的 Phase 3.1 已完整复制并验证 C 盘真实 Phase 3 数据，随后通过既有 BootstrapConfig 保存选择。此前 Bootstrap 虽指向 D，但 D 只有 Phase 1 空库，旧文档“迁移完成”的说法不准确。原 `C:\Users\Lenovo\AI-Video-Workspace` 现仅作安全副本保留，未经用户确认不得删除。详见 [迁移验收](docs/PHASE_3_1_STATUS.md)。
+- 当前业务 Workspace Root：`D:\AI-Video-Workspace`。2026-09-22 的 Phase 3.1 已完整复制并验证 C 盘真实 Phase 3 数据，随后通过既有 BootstrapConfig 保存选择。此前 Bootstrap 虽指向 D，但 D 只有 Phase 1 空库，旧文档“迁移完成”的说法不准确。Phase 3.1 当时保留了原 `C:\Users\Lenovo\AI-Video-Workspace` 安全副本，但 Phase 4 实机复查未找到该路径；本轮没有删除或移动它。Phase 4 迁移前另备份了 D 盘数据库至其 backups 目录。详见 [迁移验收](docs/PHASE_3_1_STATUS.md)。
 - Playwright 浏览器：`D:\study\DO\DevCache\playwright`。`npm test` 和 `npm run test:install` 都通过项目级脚本固定该路径；`frontend/playwright.config.ts` 也为直接测试命令设置同一环境变量。
 - 重新安装当前 Chromium 时运行 `npm --prefix frontend run test:install`。本次未删除 C 盘既有 `ms-playwright`，因为其中可能包含其他项目使用的版本。
 
@@ -189,7 +201,7 @@ Bootstrap Config 默认位于 Windows `%APPDATA%/AI-Video-Workspace/config.json`
 
 ## Workspace API
 
-Workspace 切换仍仅提供 API 入口；Settings 页面可查看工作空间与切换主题。可在本地 Swagger 文档中调用，或使用 PowerShell：
+Workspace 切换可从 Settings 使用现有 API；页面还可查看工作空间与切换主题。可在本地 Swagger 文档中调用，或使用 PowerShell：
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8765/api/settings/workspace
@@ -278,7 +290,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini heads
 uv run --locked --project backend alembic -c backend/alembic.ini upgrade head --sql
 ```
 
-当前 head 是 `0003_asset_library`，新增 assets / tags / asset_tags / project_asset_links / shot_asset_links，保留 app_settings 和全部 Phase 2 表。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
+当前 head 是 `0004_characters`，新增 characters / character_states / character_asset_links / character_state_asset_links / shot_character_state_links，保留全部 Phase 1–3 数据表。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
 
 常用迁移命令（项目根目录；操作的是 bootstrap 当前选中的工作空间）：
 
@@ -289,7 +301,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini check
 uv run --locked --project backend alembic -c backend/alembic.ini revision --autogenerate -m "describe schema change"
 ```
 
-`downgrade 0002_core_workflow` 会删除本阶段五张资产 / 关联表但保留项目层级；`downgrade 0001_app_settings` 会删除全部业务表；`downgrade base` 还会删除设置表。回退只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
+`downgrade 0003_asset_library` 会删除 Phase 4 五张角色 / 关联表；`downgrade 0002_core_workflow` 还会删除资产 / 关联表但保留项目层级；`downgrade 0001_app_settings` 会删除全部业务表；`downgrade base` 还会删除设置表。回退只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
 
 浏览器测试需先构建前端，并首次安装 Chromium：
 
@@ -314,7 +326,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 3.1 Workspace Migration 已完成并暂停；Phase 4（Character / CharacterState）必须等待用户验收确认后才开始。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 4 已完成并暂停，详见 [Phase 4 验收](docs/PHASE_4_STATUS.md)；不自动进入 Phase 5。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

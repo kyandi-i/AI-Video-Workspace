@@ -30,10 +30,11 @@ export function Component() {
           ["scenes", "Scenes"],
           ["shots", "Shots"],
           ["assets", "Assets"],
+          ["characters", "Characters"],
         ].map(([path, label]) => (
           <NavLink
             key={label}
-            end
+            end={path !== "characters"}
             to={`/projects/${projectId}${path ? `/${path}` : ""}`}
             className={({ isActive }) => (isActive ? "active" : "")}
           >

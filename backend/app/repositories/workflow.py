@@ -32,9 +32,11 @@ class ProjectRepository(WorkflowRepository):
         super().__init__(session, Project)
 
     def latest_deletion(self):
+        from app.models.characters import Character, CharacterState
+
         timestamps = [
             self.session.scalar(select(func.max(model.deleted_at)))
-            for model in (Project, Script, ScriptNode, Scene, Shot)
+            for model in (Project, Script, ScriptNode, Scene, Shot, Character, CharacterState)
         ]
         return max((stamp for stamp in timestamps if stamp is not None), default=None)
 

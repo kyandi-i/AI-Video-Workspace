@@ -23,6 +23,14 @@ export const router = createBrowserRouter([
         lazy: () => import("@/features/projects/project-layout"),
         children: [
           {
+            path: "characters",
+            lazy: () => import("@/features/characters/characters-page"),
+          },
+          {
+            path: "characters/:characterId",
+            lazy: () => import("@/features/characters/character-detail"),
+          },
+          {
             index: true,
             lazy: () => import("@/features/projects/project-overview"),
           },

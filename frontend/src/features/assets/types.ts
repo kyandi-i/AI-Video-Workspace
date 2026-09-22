@@ -27,6 +27,8 @@ export interface Asset extends Entity {
 export interface AssetDetail extends Asset {
   projects: Project[];
   shots: Shot[];
+  characters: (Entity & { project_id: string; name: string })[];
+  character_states: (Entity & { character_id: string; name: string })[];
 }
 export type AssetInput = Pick<Asset, "name" | "description" | "asset_type">;
 export type AssetFilters = {

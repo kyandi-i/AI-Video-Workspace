@@ -18,6 +18,7 @@ export function useShotMutations(projectId: string) {
   const refresh = (sceneId: string, id?: string) =>
     Promise.all(
       [
+        ["shot-workspace"],
         shotsKeys.byScene(sceneId),
         shotsKeys.byProject(projectId),
         scenesKeys.byProject(projectId),
@@ -48,6 +49,7 @@ export function useShotMutations(projectId: string) {
     mutationFn: ({ id, direction }: { id: string; direction: "up" | "down" }) =>
       shotApi.move(id, direction),
     onSuccess: async (shots) => {
+      await client.invalidateQueries({ queryKey: ["shot-workspace"] });
       const sceneId = shots[0]?.scene_id;
       if (!sceneId) return;
       // Apply the server's canonical order in one cache update. Cancel older reads

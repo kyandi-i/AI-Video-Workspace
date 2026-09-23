@@ -85,6 +85,14 @@ export function ShotTable({
                       打开
                     </Link>
                   </Button>
+                  <Button size="sm" variant="ghost" asChild>
+                    <Link
+                      to={`/shots/${shot.id}/workspace`}
+                      state={{ returnTo }}
+                    >
+                      Workspace
+                    </Link>
+                  </Button>
                   <ShotEditor
                     projectId={projectId}
                     scenes={scenes}

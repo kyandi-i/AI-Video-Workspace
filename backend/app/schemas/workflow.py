@@ -107,15 +107,33 @@ class ShotCreate(Input):
     duration_seconds: Duration = 0
     status: ShotStatus = ShotStatus.DRAFT
     creative_requirement: str = ""
+    main_action: str | None = None
+    key_constraints: str | None = None
+    negative_constraints: str | None = None
+    free_notes: str | None = None
 
 
 class ShotUpdate(Update):
+    @model_validator(mode="before")
+    @classmethod
+    def reject_null(cls, value):
+        nullable = {"main_action", "key_constraints", "negative_constraints", "free_notes"}
+        if isinstance(value, dict) and any(
+            v is None and key not in nullable for key, v in value.items()
+        ):
+            raise ValueError("字段不能为 null；省略字段以保留原值。")
+        return value
+
     shot_code: Code | None = None
     title: Name | None = None
     description: str | None = None
     duration_seconds: Duration | None = None
     status: ShotStatus | None = None
     creative_requirement: str | None = None
+    main_action: str | None = None
+    key_constraints: str | None = None
+    negative_constraints: str | None = None
+    free_notes: str | None = None
 
 
 class ShotRead(Read):
@@ -128,6 +146,10 @@ class ShotRead(Read):
     order_index: int
     status: ShotStatus
     creative_requirement: str
+    main_action: str | None = None
+    key_constraints: str | None = None
+    negative_constraints: str | None = None
+    free_notes: str | None = None
 
 
 class ShotMove(Input):

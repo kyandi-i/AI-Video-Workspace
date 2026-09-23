@@ -130,3 +130,8 @@ def bind_shot(shot_id: UUID, data: ShotStateCreate, db: DB):
 @router.delete("/shots/{shot_id}/character-states/{state_id}", response_model=list[ShotStateRead])
 def unbind_shot(shot_id: UUID, state_id: UUID, db: DB):
     return CharacterService(db).bind_shot(shot_id, state_id, remove=True)
+
+
+@router.put("/shots/{shot_id}/character-states", response_model=list[ShotStateRead])
+def replace_shot_state(shot_id: UUID, data: ShotStateCreate, db: DB):
+    return CharacterService(db).replace_shot_state(shot_id, data.character_state_id)

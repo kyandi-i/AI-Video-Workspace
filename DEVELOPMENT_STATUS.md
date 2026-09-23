@@ -2,24 +2,25 @@
 
 更新日期：2026-09-23
 
-**Phase 4 — Character / CharacterState 已完成，等待用户验收。不进入 Phase 5 Shot Workspace。**
+**Phase 5 — Shot Workspace COMPLETE。已完成，等待用户验收；不进入 Phase 6 Prompt Template。**
 
-- 新增项目角色与角色视觉状态：UUID、UTC、软删除、名称唯一、notes nullable、服务端连续排序及同次级联恢复。
-- 新增 CharacterAssetLink / CharacterStateAssetLink / ShotCharacterStateLink，复用统一 Asset；角色本身不存图片，不复制文件。Shot 同项目、同角色单 active 状态由 Service 与 DB 索引保护。
-- 状态使用中删除返回明确镜头数量；Asset 引用保护加入角色 / 状态；Project / Script / Scene / Shot 删除同步处理新增关系，不留 active orphan。
-- 项目 Characters 导航、Grid / Search、角色详情、状态 CRUD / 顺序 / 预览、AssetPicker、导入自动绑定、软删除恢复与基础 Shot 绑定 UI。继续复用 Phase 2.5 / 3 公共组件与 Dark / Light 视觉。
-- 迁移 `0004_characters`；Route → Service → Repository / Provider、Local-first、SQLite、Managed Storage 与外置 Bootstrap 保持。No new dependency.
-- lint / build / Ruff PASS；backend **135/135**（111 + 24）；browser production **31/31**（28 + 3）；browser development **33/33**（30 + 3）；隔离 Alembic upgrade → downgrade base → upgrade / current / check PASS，已有 Phase 2/3 数据逐行迁移保留。
-- Dark / Light、1024 / 1280、表单 / Picker / Shot / 详情截图验证；修正 Picker 搜索框被 Select 挤压并加入几何断言。截图使用合成夹具。
-- 全部自动化回归后，真实 D Workspace 原有 DB / 原图 / thumbnail 哈希与测试前一致。此后才执行用户明确授权的真实数据验收。
-- 真实 SPF 项目已建立 `SPF培训女员工`、六个状态、风淋场景与 S13，绑定 `黄色 PPE + 双层手套`。刷新和应用重启后保持。用户确认暂不绑定唯一的无关动漫头像；真实素材绑定不冒充已验收。
-- 真实迁移前 DB 备份：`D:\AI-Video-Workspace\backups\before-phase4-20260923.db`。原有业务行和媒体哈希保持，DB integrity / FK 检查通过。
-- 历史 C 盘安全副本本轮只读检查未找到；未对该路径执行删除或移动。当前应用仍使用 `D:\AI-Video-Workspace`。
+- 正式 `/shots/:shotId/workspace`，列表直达，Header / Previous / Next / Scene Context / Characters / Reference Assets / Requirements / Production Status；旧详情与 CRUD / Search / Filter / Move 保留。
+- Shot 新增 main_action / key_constraints / negative_constraints / free_notes 四个 nullable TEXT 字段，ShotCreate / ShotUpdate / ShotRead 向后兼容；creative_requirement 原样保留，非空时可查看 Legacy Creative Requirement，旧编辑器继续使用。
+- 一次 PATCH 显式 Save，Saved / Unsaved / Saving / Save failed、失败草稿保留、防重复提交、内部路由离开确认与浏览器原生离开保护。
+- GET Workspace 聚合真实上下文与项目服务端顺序；PUT character-states 在单事务内替换同角色状态，保留 Phase 4 唯一索引、冲突校验与生命周期。
+- AssetPicker / ImportAssets / Asset Detail 复用；thumbnail 预览、前六项 / View All，Unbind / Remove 只解除关系。Scene 只读，角色资产不复制到 Shot。
+- 迁移 `0005_shot_workspace`；Workspace 架构、Local-first、SQLite、Managed Storage、UUID、分层边界和全部锁文件保持。No new dependency.
+- lint / build / Ruff check / format PASS；backend **148/148**（135 + 13），browser production **36/36**（31 + 5），browser development **38/38**（33 + 5），均正常退出。
+- 隔离 Alembic CLI upgrade → downgrade base → upgrade / current / check PASS；有数据的0005 → 0004 → 0005保持 Phase 2/3/4 所有旧列及关联，外键校验通过。
+- Dark / Light、1024 / 1280截图人工检查、无水平溢出、保存条可见、Textarea / Select / thumbnail布局通过。正式文档截图为隔离夹具。
+- 所有自动化测试结束后真实 Workspace 初始文件 SHA-256保持不变。随后创建 `D:\AI-Video-Workspace\backups\before-phase5-20260923.db`，正常启动执行新迁移；没有覆盖 Phase 4 备份。
+- 真实 SPF S13通过正式UI保存10秒与指定四字段，保留原角色 `SPF培训女员工 → 黄色 PPE + 双层手套`；按用户确认将场景“风淋”改名“风淋室”，使用实际存在的 S10导航验收，不新建 S12。
+- 刷新、S10 → S13、服务重启后保持；其他业务数据、媒体和旧备份不变，DB integrity / FK通过。未绑定用途不明的真实素材。实机截图、脚本和数据快照仅存Git忽略的审计目录。
 
-完整模型、API、生命周期、真实验收、截图和限制见 [Phase 4 验收](docs/PHASE_4_STATUS.md)。
+完整范围、数据模型、API、导航、保存行为、截图和限制见 [Phase 5 验收](docs/PHASE_5_STATUS.md)。
 
-已知限制：恢复不自动重建 Phase 4 关联，需要重新绑定；名称区分大小写且已删除记录仍保留名称；Picker 每次确认一个 Asset；导入与绑定为两次请求，绑定失败时素材仍在 Library。
+已知限制：导入与绑定为两次请求，绑定失败时资产仍在Library；Legacy字段通过旧详情编辑；Open Scene沿用场景列表；浏览器关闭提示由浏览器控制，无离线草稿恢复及多标签编辑冲突处理。
 
-历史验收：[Phase 3.1](docs/PHASE_3_1_STATUS.md)、[Phase 3](docs/PHASE_3_STATUS.md)、[Phase 2.5](docs/PHASE_2_5_STATUS.md)、[Phase 2](docs/PHASE_2_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 0](docs/PHASE_0_STATUS.md)。范围见 [计划索引](PROJECT_PLAN.md) 和 [MVP 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
+历史验收：[Phase 4](docs/PHASE_4_STATUS.md)、[Phase 3.1](docs/PHASE_3_1_STATUS.md)、[Phase 3](docs/PHASE_3_STATUS.md)、[Phase 2.5](docs/PHASE_2_5_STATUS.md)、[Phase 2](docs/PHASE_2_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 0](docs/PHASE_0_STATUS.md)。范围见 [计划索引](PROJECT_PLAN.md) 和 [MVP 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**本阶段完成后停止，等待验收。**
+**Phase 5完成后停止，等待验收。不进入Phase 6。**

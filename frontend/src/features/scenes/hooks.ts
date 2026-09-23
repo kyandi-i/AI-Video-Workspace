@@ -13,9 +13,11 @@ export function useSceneMutations(projectId: string) {
   const client = useQueryClient();
   const refresh = () =>
     Promise.all(
-      [scenesKeys.byProject(projectId), projectsKeys.stats(projectId)].map(
-        (queryKey) => client.invalidateQueries({ queryKey }),
-      ),
+      [
+        ["shot-workspace"],
+        scenesKeys.byProject(projectId),
+        projectsKeys.stats(projectId),
+      ].map((queryKey) => client.invalidateQueries({ queryKey })),
     );
   const save = useMutation({
     mutationFn: ({

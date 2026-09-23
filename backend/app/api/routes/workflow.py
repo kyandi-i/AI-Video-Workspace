@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.workflow import ShotStatus
+from app.schemas.shot_workspace import ShotWorkspaceRead
 from app.schemas.workflow import (
     ProjectCreate,
     ProjectRead,
@@ -22,10 +23,16 @@ from app.schemas.workflow import (
     ShotRead,
     ShotUpdate,
 )
+from app.services.shot_workspace import ShotWorkspaceService
 from app.services.workflow import ProjectService, SceneService, ScriptService, ShotService
 
 router = APIRouter(tags=["Project workflow"])
 DB = Annotated[Session, Depends(get_db)]
+
+
+@router.get("/shots/{identifier}/workspace", response_model=ShotWorkspaceRead)
+def get_shot_workspace(identifier: UUID, db: DB):
+    return ShotWorkspaceService(db).get_workspace(identifier)
 
 
 @router.get("/projects", response_model=list[ProjectRead])

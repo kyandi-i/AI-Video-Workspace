@@ -218,7 +218,7 @@ def test_import_compensation_covers_commit(client, monkeypatch, failure):
 
 
 def test_phase3_upgrade_preserves_phase2_data_and_downgrades(tmp_path):
-    from app.schemas.workflow import SceneCreate, ScriptCreate, ShotCreate
+    from app.schemas.workflow import SceneCreate, ScriptCreate
     from app.services.assets import AssetService
     from app.services.workflow import SceneService, ScriptService, ShotService
 
@@ -238,8 +238,30 @@ def test_phase3_upgrade_preserves_phase2_data_and_downgrades(tmp_path):
             scene = SceneService(session).create_scene(
                 identifier, SceneCreate(script_id=script.id, name="Existing scene")
             )
-            shot = ShotService(session).create_shot(
-                scene.id, ShotCreate(project_id=identifier, shot_code="S13", title="Existing shot")
+            # Seed the historical schema with its reflected table, not the current ORM.
+            from types import SimpleNamespace
+
+            from sqlalchemy import MetaData, Table
+
+            from app.models.base import utc_now
+
+            shot = SimpleNamespace(id=uuid4())
+            old_shots = Table("shots", MetaData(), autoload_with=session.connection())
+            session.execute(
+                old_shots.insert().values(
+                    id=shot.id.hex,
+                    project_id=identifier.hex,
+                    scene_id=scene.id.hex,
+                    shot_code="S13",
+                    title="Existing shot",
+                    description="",
+                    duration_seconds=0,
+                    order_index=0,
+                    status="DRAFT",
+                    creative_requirement="",
+                    created_at=utc_now(),
+                    updated_at=utc_now(),
+                )
             )
         database.upgrade()
         with database.session() as session:

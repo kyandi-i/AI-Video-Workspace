@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 4：Character / CharacterState。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。已支持项目角色、视觉状态、参考资产与镜头状态绑定。Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
+**当前完成 Phase 5：Shot Workspace。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。已支持项目角色、视觉状态、参考资产与镜头状态绑定，以及单镜头生产 Workspace、结构化要求、显式保存和前后镜头导航。Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
 
 ## 环境
 
@@ -78,7 +78,7 @@ backend/
     schemas/          # Pydantic 请求/响应契约
     repositories/     # BaseRepository + 各业务 Repository，默认忽略软删除记录
     services/         # Workflow / AssetService / Workspace；storage/ Service 与 Provider
-    migrations/       # 0001_app_settings → 0002_core_workflow → 0003_asset_library → 0004_characters
+    migrations/       # 0001_app_settings → 0002_core_workflow → 0003_asset_library → 0004_characters → 0005_shot_workspace
   tests/
 frontend/
   src/
@@ -108,7 +108,7 @@ Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title 
 
 ## Core Workflow API
 
-完整输入、输出契约见本地 `/api/docs`。Create / Update / Read schema 分离；PATCH 省略字段表示保留原值，显式 null 和未知字段返回 422。
+完整输入、输出契约见本地 `/api/docs`。Create / Update / Read schema 分离；PATCH 省略字段表示保留原值，旧必填字段显式 null 和未知字段返回 422；Phase 5 四个 nullable 要求字段允许 null 清空。
 
 | 资源 | 列表 / 创建 | 详情 / 更新 / 删除 |
 | --- | --- | --- |
@@ -133,7 +133,21 @@ Scene 的名称、描述和约束由 Scene 唯一维护；SCENE 节点的 title 
 
 Character 是身份，CharacterState 是视觉阶段，实际图片 / 视频仍统一为 Asset。名称在项目 / 角色内唯一，区分大小写，软删除后保留占用。Asset 删除保护已包含 Character / State 引用。无新依赖。
 
-新增 API 与模型字段、删除规则、135项后端 / 31项生产浏览器 / 33项开发浏览器验收及两种主题截图见 [Phase 4 状态](docs/PHASE_4_STATUS.md)。本阶段只给 Shot Detail 增加基础绑定入口，未实现 Phase 5 Workspace。
+新增 API 与模型字段、删除规则、135项后端 / 31项生产浏览器 / 33项开发浏览器验收及两种主题截图见 [Phase 4 状态](docs/PHASE_4_STATUS.md)。该文档记录 Phase 4 历史验收；当前生产 Workspace 见下节。
+
+## Shot Workspace
+
+从 Shot 列表每行的 **Workspace** 或旧详情的 **Open Workspace** 进入 `/shots/:shotId/workspace`。保留原 Edit / Delete / Move / Search / Filter 与旧详情。
+
+- Header 展示编号、标题、时长、友好状态 Badge、项目内位置及 Previous / Next。导航复用后端的 Script → Scene order_index → Shot order_index 顺序，不按编号字符串排序。
+- Scene Context 只读展示场景描述、固定约束及负面约束；Open Scene 返回现有场景页面。Characters 展示角色身份、状态与两类参考缩略图，支持 Add / Change / Replace / Remove；同角色替换为单事务。
+- Reference Assets 复用 AssetPicker / ImportAssets / Asset Detail，支持绑定、托管导入后绑定与解绑。默认最多六项，可 View All；Unbind / Remove 只解除关系。
+- Shot Requirements 集中编辑 title、description、duration_seconds、status、main_action、key_constraints、negative_constraints、free_notes；点击 **Save Changes** 统一 PATCH。显示 Saved / Unsaved changes / Saving / Save failed，失败保留草稿。内部导航弹确认框，关闭 / 刷新由浏览器原生离开提示保护。
+- `creative_requirement` 原样保留，不复制、不删除；非空时显示 Legacy Creative Requirement，可到旧详情继续编辑。四个新字段与 Scene 数据独立。
+- Production Status 直接使用现有枚举；就绪摘要仅按已保存上下文计算。角色和资产绑定即时保存，不等待主表单 Save。
+- Dark / Light、1024 / 1280 已验证；无新依赖，无 AI 调用。真实 S13、迁移与完整回归记录见 [Phase 5 验收](docs/PHASE_5_STATUS.md)。
+
+新增 `GET /api/shots/{id}/workspace` 聚合 Shot / Scene / CharacterState / 角色及状态资产 / Shot 资产 / 前后镜头。新增 `PUT /api/shots/{id}/character-states`，body `{character_state_id}`，原子替换目标角色的状态；其他角色保持。既有 `POST /api/scenes/{id}/shots`、`PATCH /api/shots/{id}` 及 ShotRead 支持四个新字段。原资产与角色关联接口继续兼容。
 
 ## Phase 2.5 UX 修正
 
@@ -290,7 +304,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini heads
 uv run --locked --project backend alembic -c backend/alembic.ini upgrade head --sql
 ```
 
-当前 head 是 `0004_characters`，新增 characters / character_states / character_asset_links / character_state_asset_links / shot_character_state_links，保留全部 Phase 1–3 数据表。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
+当前 head 是 `0005_shot_workspace`，只给 shots 增加四个 nullable TEXT 字段，保留全部 Phase 1–4 数据表及旧列。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
 
 常用迁移命令（项目根目录；操作的是 bootstrap 当前选中的工作空间）：
 
@@ -301,7 +315,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini check
 uv run --locked --project backend alembic -c backend/alembic.ini revision --autogenerate -m "describe schema change"
 ```
 
-`downgrade 0003_asset_library` 会删除 Phase 4 五张角色 / 关联表；`downgrade 0002_core_workflow` 还会删除资产 / 关联表但保留项目层级；`downgrade 0001_app_settings` 会删除全部业务表；`downgrade base` 还会删除设置表。回退只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
+`downgrade 0004_characters` 会移除 Phase 5 四个新要求字段；`downgrade 0003_asset_library` 还会删除 Phase 4 五张角色 / 关联表；`downgrade 0002_core_workflow` 还会删除资产 / 关联表但保留项目层级；`downgrade 0001_app_settings` 会删除全部业务表；`downgrade base` 还会删除设置表。回退只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
 
 浏览器测试需先构建前端，并首次安装 Chromium：
 
@@ -326,7 +340,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 4 已完成并暂停，详见 [Phase 4 验收](docs/PHASE_4_STATUS.md)；不自动进入 Phase 5。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 5 已完成并暂停，详见 [Phase 5 验收](docs/PHASE_5_STATUS.md)；不进入 Phase 6 Prompt Template。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

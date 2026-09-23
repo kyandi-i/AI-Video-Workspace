@@ -99,3 +99,7 @@ class Shot(BaseModel):
     order_index: Mapped[int] = mapped_column(default=0)
     status: Mapped[ShotStatus] = mapped_column(enum_type(ShotStatus), default=ShotStatus.DRAFT)
     creative_requirement: Mapped[str] = mapped_column(Text, default="")
+    main_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    key_constraints: Mapped[str | None] = mapped_column(Text, nullable=True)
+    negative_constraints: Mapped[str | None] = mapped_column(Text, nullable=True)
+    free_notes: Mapped[str | None] = mapped_column(Text, nullable=True)

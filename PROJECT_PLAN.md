@@ -1,6 +1,6 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 4 — Character / CharacterState，已完成，等待用户验收；不进入 Phase 5。**
+当前开发阶段：**Phase 5 — Shot Workspace，已完成，等待用户验收；不进入 Phase 6 Prompt Template。**
 
 ## 依据
 
@@ -10,6 +10,15 @@
 4. [开发状态](DEVELOPMENT_STATUS.md)：当前能力与验收记录；[Phase 0](docs/PHASE_0_STATUS.md) / [Phase 1](docs/PHASE_1_STATUS.md) 已归档。
 5. [资源审计](docs/RESOURCE_AUDIT_2026-09-20.md)：Phase 1.5 前只读基线。用户明确确认“审计完成后立即执行 Phase 1.5”。
 6. [Phase 2 范围与实现约定](docs/PHASE_2_SPEC.md)：用户本轮授权的项目层级业务闭环与验收映射；[Phase 1.5 历史状态](docs/PHASE_1_5_STATUS.md)。
+
+## Phase 5 范围
+
+- Dedicated Shot Workspace：Header、项目真实顺序 Previous / Next、Scene 只读上下文、Character / State 上下文、Shot 参考素材、Production Status。
+- 四个 nullable TEXT 要求字段、显式 Save、保存状态与未保存离开保护；creative_requirement 原样兼容。
+- 原子替换角色状态；复用 AssetPicker / ImportAssets / Asset Detail / thumbnail，不新增素材角色分类或业务流程表。
+- 迁移 `0005_shot_workspace`，隔离完整回归148后端 / 36生产浏览器 / 38开发浏览器，Dark / Light / 1024 / 1280。
+- 真实 SPF S13 备份、迁移、10秒及需求保存、S10前后导航、刷新重启持久化验收通过；用户确认场景改名风淋室。
+- 详细范围、兼容、API、截图、测试与限制见 [Phase 5 状态](docs/PHASE_5_STATUS.md)。Phase 5 COMPLETE，完成后停止，不进入 Phase 6。
 
 ## Phase 4 范围
 
@@ -53,4 +62,4 @@
 
 Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-完成本阶段后暂停。**Phase 5 必须获得用户确认，不自动进入。**
+完成本阶段后暂停。**不进入 Phase 6 Prompt Template，等待用户验收。**

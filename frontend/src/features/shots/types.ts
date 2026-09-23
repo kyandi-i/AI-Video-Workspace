@@ -20,6 +20,10 @@ export interface Shot extends Entity {
   order_index: number;
   status: ShotStatus;
   creative_requirement: string;
+  main_action: string | null;
+  key_constraints: string | null;
+  negative_constraints: string | null;
+  free_notes: string | null;
 }
 export type ShotInput = Pick<
   Shot,

@@ -48,6 +48,13 @@ function Detail({ shot }: { shot: Shot }) {
           />
         }
       />
+      <Link
+        className="back-link"
+        to={`/shots/${shot.id}/workspace`}
+        state={{ returnTo }}
+      >
+        Open Workspace →
+      </Link>
       <WorkspacePanel title="镜头信息">
         <Link className="back-link" to={`/assets?shot_id=${shot.id}`}>
           查看关联资产 →

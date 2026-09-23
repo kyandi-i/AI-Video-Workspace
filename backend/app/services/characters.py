@@ -209,14 +209,19 @@ class CharacterService(WorkflowService):
         return (self.read_state if state else self.read_character)(entity)
 
     def list_shot_states(self, shot_id):
-        self.shot(shot_id)
+        shot = self.shot(shot_id)
         result = []
         for link in self.shot_links.matching(shot_id=shot_id):
             state = self.state(link.character_state_id)
+            character = self.character(state.character_id)
+            self.relation(character.project_id == shot.project_id)
             result.append(
                 ShotStateRead(
                     **self.read_state(state).model_dump(),
-                    character_name=self.character(state.character_id).name,
+                    character_name=character.name,
+                    character_description=character.description,
+                    character_notes=character.notes,
+                    character_assets=self.assets_for(character.id),
                 )
             )
         return result
@@ -251,3 +256,14 @@ class CharacterService(WorkflowService):
                 "SHOT_CHARACTER_STATE_CONFLICT", "该镜头已绑定此角色的其他状态。", 409
             ) from exc
         return self.list_shot_states(shot_id) if shot.deleted_at is None else []
+
+    @atomic
+    def replace_shot_state(self, shot_id, state_id):
+        shot = self.shot(shot_id)
+        state = self.state(state_id)
+        character = self.character(state.character_id)
+        self.relation(shot.project_id == character.project_id)
+        for link in self.shot_links.matching(shot_id=shot_id, character_id=character.id):
+            if link.character_state_id != state_id:
+                self.shot_links.soft_delete(link)
+        return self.bind_shot(shot_id, state_id)

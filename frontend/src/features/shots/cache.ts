@@ -8,6 +8,16 @@ export function removeShotDetails(
   projectId: string,
   sceneIds?: string[],
 ) {
+  for (const [queryKey, data] of client.getQueriesData<{ shot: Shot }>({
+    queryKey: ["shot-workspace"],
+  })) {
+    if (
+      data?.shot.project_id === projectId &&
+      (!sceneIds || sceneIds.includes(data.shot.scene_id))
+    ) {
+      client.removeQueries({ queryKey, exact: true });
+    }
+  }
   for (const [queryKey, shot] of client.getQueriesData<Shot>({
     queryKey: shotsKeys.details,
   })) {

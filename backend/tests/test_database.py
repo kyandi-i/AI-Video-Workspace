@@ -51,13 +51,13 @@ def test_migration_upgrade_downgrade_and_autogenerate(tmp_path):
             }
             assert (
                 connection.scalar(text("select version_num from alembic_version"))
-                == "0004_characters"
+                == "0005_shot_workspace"
             )
             command.check(config)
             revision = command.revision(
                 config, message="test metadata discovery", autogenerate=True
             )
-            assert revision.down_revision == "0004_characters"
+            assert revision.down_revision == "0005_shot_workspace"
             command.upgrade(config, "head")
             command.downgrade(config, "base")
             assert "app_settings" not in inspect(connection).get_table_names()

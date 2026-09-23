@@ -50,6 +50,10 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        path: "/shots/:shotId/workspace",
+        lazy: () => import("@/features/shots/shot-workspace"),
+      },
+      {
         path: "/shots/:shotId",
         lazy: () => import("@/features/shots/shot-detail"),
       },

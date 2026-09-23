@@ -37,6 +37,7 @@ export function useCharacterActions(project: string) {
     mutationFn: (action: () => Promise<unknown>) => action(),
     onSuccess: async () => {
       await Promise.all([
+        client.invalidateQueries({ queryKey: ["shot-workspace"] }),
         client.invalidateQueries({ queryKey: characterKeys.project(project) }),
         client.invalidateQueries({ queryKey: ["shot-characters"] }),
         client.invalidateQueries({ queryKey: ["assets", "detail"] }),

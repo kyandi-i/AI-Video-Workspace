@@ -19,5 +19,8 @@ export interface CharacterState extends Entity {
 }
 export interface ShotState extends CharacterState {
   character_name: string;
+  character_description: string;
+  character_notes: string | null;
+  character_assets: Asset[];
 }
 export type OwnerKind = "characters" | "character-states";

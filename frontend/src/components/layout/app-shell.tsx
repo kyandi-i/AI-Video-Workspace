@@ -21,9 +21,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import { useHealth } from "@/features/dashboard/use-health";
 
-const navigation = [
-  { label: "Prompt Templates", icon: FileText },
-];
+const navigation = [{ label: "Prompt Templates", icon: FileText }];
 
 export function AppShell() {
   const { theme, setTheme } = useTheme();
@@ -39,7 +37,9 @@ export function AppShell() {
           : location.pathname.startsWith("/projects")
             ? "Projects"
             : location.pathname.startsWith("/shots/")
-              ? "Shot Detail"
+              ? location.pathname.endsWith("/workspace")
+                ? "Shot Workspace"
+                : "Shot Detail"
               : "Workspace";
   return (
     <div className="app-shell">

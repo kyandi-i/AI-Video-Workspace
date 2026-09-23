@@ -58,6 +58,9 @@ class StateRead(Read):
 
 class ShotStateRead(StateRead):
     character_name: str
+    character_description: str = ""
+    character_notes: str | None = None
+    character_assets: list[AssetRead] = []
 
 
 class ShotStateCreate(Input):

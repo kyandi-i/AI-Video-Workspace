@@ -169,7 +169,7 @@ Character 是身份，CharacterState 是视觉阶段，实际图片 / 视频仍�
 
 ## 本机资源路径
 
-- 当前业务 Workspace Root：`D:\AI-Video-Workspace`。2026-09-22 的 Phase 3.1 已完整复制并验证 C 盘真实 Phase 3 数据，随后通过既有 BootstrapConfig 保存选择。此前 Bootstrap 虽指向 D，但 D 只有 Phase 1 空库，旧文档“迁移完成”的说法不准确。Phase 3.1 当时保留了原 `C:\Users\Lenovo\AI-Video-Workspace` 安全副本，但 Phase 4 实机复查未找到该路径；本轮没有删除或移动它。Phase 4 迁移前另备份了 D 盘数据库至其 backups 目录。详见 [迁移验收](docs/PHASE_3_1_STATUS.md)。
+- 当前业务 Workspace Root：`D:\AI-Video-Workspace`（本机真实数据唯一事实源，1 Project / 4 Shot / 1 Character / 6 CharacterState）。Bootstrap Config 已统一为 `D:\AI-Video-Workspace-Config\config.json`，由用户级环境变量 `AVW_BOOTSTRAP_CONFIG_PATH` 指定，因此普通 Windows 会话与 `%APPDATA%` 被重定向的打包应用解析**同一份**配置。历史 `C:\Users\Lenovo\AI-Video-Workspace` 只是 fallback 自动创建的空 Workspace（0 业务行），保留但不再被读取或写入，未经用户确认不删除。详见 [Phase 5.1 验收](docs/PHASE_5_1_STATUS.md) 与 [Phase 3.1 验收](docs/PHASE_3_1_STATUS.md)。
 - Playwright 浏览器：`D:\study\DO\DevCache\playwright`。`npm test` 和 `npm run test:install` 都通过项目级脚本固定该路径；`frontend/playwright.config.ts` 也为直接测试命令设置同一环境变量。
 - 重新安装当前 Chromium 时运行 `npm --prefix frontend run test:install`。本次未删除 C 盘既有 `ms-playwright`，因为其中可能包含其他项目使用的版本。
 
@@ -193,7 +193,7 @@ Settings 中输入目标绝对路径并“保存并切换工作空间”，调�
 
 可复制 `backend/.env.example` 为 `backend/.env`。环境变量前缀为 `AVW_`；相对工作空间路径始终相对于仓库根目录解析，不依赖启动目录。
 
-默认 Workspace 为 `~/AI-Video-Workspace`。首次服务启动自动创建下列目录，并通过 **Alembic upgrade head** 初始化数据库；应用不使用 `create_all()` 管理 Schema。
+默认 Workspace 为 `~/AI-Video-Workspace`。首次服务启动自动创建下列目录，并通过 **Alembic upgrade head** 初始化数据库；应用不使用 `create_all()` 管理 Schema。首次启动**不会**写入 Bootstrap Config（见下）。
 
 ```text
 <workspace_root>/
@@ -205,9 +205,17 @@ Settings 中输入目标绝对路径并“保存并切换工作空间”，调�
   backups/
 ```
 
-Bootstrap Config 默认位于 Windows `%APPDATA%/AI-Video-Workspace/config.json`（其他系统为 `~/.config/AI-Video-Workspace/config.json`），仅保存 `workspace_root`。可通过 `AVW_BOOTSTRAP_CONFIG_PATH` 指定独立配置。它必须位于工作空间之外。
+Bootstrap Config 默认位于 Windows `%APPDATA%/AI-Video-Workspace/config.json`（其他系统为 `~/.config/AI-Video-Workspace/config.json`），仅保存 `workspace_root`。可用 `AVW_BOOTSTRAP_CONFIG_PATH` 指定另一份配置，其优先级**高于** `%APPDATA%` 默认位置。它必须位于工作空间之外。
 
-查找顺序：**已保存的 Bootstrap Config → AVW_WORKSPACE_ROOT → 默认目录**。`AVW_WORKSPACE_ROOT` 仅用于首次配置，后续通过 API 选择的目录在重启后继续生效；损坏的配置会明确报错，不会静默重置。若要隔离测试或另一套实例，必须同时指定独立的 bootstrap 配置路径与初始 root。
+解析顺序：**`AVW_BOOTSTRAP_CONFIG_PATH`（若设置）→ 该配置中已保存的 `workspace_root` → `AVW_WORKSPACE_ROOT` → 默认目录 `~/AI-Video-Workspace`**。
+
+启动语义（Phase 5.1 起）：
+
+- **配置缺失**只提供一个内存中的默认 root：Workspace 会正常初始化（首次体验不变），但**不会**自动创建或改写 Bootstrap Config。`NO CONFIG` 不等于“用户已选择默认 Workspace”。
+- 只有显式用户动作（`PUT /api/settings/workspace`）才会写入 Bootstrap Config；`initialize_workspace()` / 启动 / lifespan / fallback 一律不写。
+- **配置损坏、JSON 形状非法或 root 非绝对路径**会明确报 `BOOTSTRAP_INVALID` 并停止启动，绝不静默回退到默认目录。
+
+Windows 打包应用（例如 Codex）会把 `%APPDATA%` 重定向到包内目录，与普通会话形成两套默认路径——这正是 Phase 5.1 之前两个环境分叉的原因。要让两个环境解析同一份配置，请为用户级环境变量 `AVW_BOOTSTRAP_CONFIG_PATH` 指定一个工作空间之外的共享绝对路径；不要修改 `APPDATA`、`HOME`、`USERPROFILE`，也不要靠 symlink / junction 绕开。若要隔离测试或另一套实例，必须显式指定独立的 bootstrap 配置路径与初始 root。
 
 工作空间切换会验证绝对路径、创建必要目录、迁移目标数据库，再原子写入配置并替换数据库连接。旧目录不会移动或删除，正在执行的事务会先完成。配置保存或数据库初始化失败时，当前选择保持不变；目标中已经初始化的目录/数据库可能保留，应用不会冒险清理用户选中的目录。新旧工作空间不允许互相嵌套。
 
@@ -329,7 +337,11 @@ npm test
 Remove-Item Env:AVW_E2E_MODE
 ```
 
-测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。npm test 为每次运行建立 `.workspace/e2e/run-*` 独立配置、数据库与小型图片 / 视频夹具；成功后待服务退出再清理该运行目录，失败保留供排查。直接调用 Playwright 则使用 `.workspace/e2e` 默认隔离目录。pytest 使用临时目录，不改变个人工作空间。覆盖真实 API、断线重试、主题持久化 / 存储受限 / 跨标签同步、只读详情与复制、未知页面返回、响应式布局、两套颜色对比度和截图；开发模式额外覆盖公共组件交互。无需手动先启动测试服务。Phase 2 增加两种主题下的完整业务 CRUD、顺序调整、筛选、删除确认、刷新持久化、表单验证 / pending / API 冲突与 404 测试。
+测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。npm test 为每次运行建立 `.workspace/e2e/run-*` 独立配置、数据库与小型图片 / 视频夹具；成功后待服务退出再清理该运行目录，失败保留供排查。直接调用 Playwright 则使用 `.workspace/e2e` 默认隔离目录。
+
+隔离要求（Phase 5.1）：pytest 通过 autouse fixture 显式注入 `AVW_WORKSPACE_ROOT` 与 `AVW_BOOTSTRAP_CONFIG_PATH`，Playwright 通过 `webServer.env` 显式注入同样两个变量，并按进程覆盖而非读取用户级设置。因此即使本机已设置生产 `AVW_BOOTSTRAP_CONFIG_PATH`，自动化测试也不会继承或写入真实 Workspace；测试前后对真实 DB、原图、thumbnail 与 backups 的 SHA-256 复核一致。测试不得为求通过而删除或修改用户级环境变量。
+
+覆盖真实 API、断线重试、主题持久化 / 存储受限 / 跨标签同步、只读详情与复制、未知页面返回、响应式布局、两套颜色对比度和截图；开发模式额外覆盖公共组件交互。无需手动先启动测试服务。Phase 2 增加两种主题下的完整业务 CRUD、顺序调整、筛选、删除确认、刷新持久化、表单验证 / pending / API 冲突与 404 测试。Phase 5.1 增加 missing / invalid / 共享 Bootstrap Config 解析、显式切换持久化与重启恢复、测试隔离共 9 项后端用例。
 
 ## 后续开发
 
@@ -340,7 +352,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 5 已完成并暂停，详见 [Phase 5 验收](docs/PHASE_5_STATUS.md)；不进入 Phase 6 Prompt Template。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 5 已完成，Phase 5.1 已修复 Workspace Root 分叉、旧配置恢复与 fallback 自播种；详见 [Phase 5 验收](docs/PHASE_5_STATUS.md) 与 [Phase 5.1 验收](docs/PHASE_5_1_STATUS.md)。不进入 Phase 6 Prompt Template。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

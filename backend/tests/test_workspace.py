@@ -1,4 +1,3 @@
-import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Event
@@ -11,7 +10,7 @@ from app.repositories.base import BaseRepository
 from app.services.workspace import DIRECTORIES, WorkspaceService
 
 
-def test_initialization_is_idempotent_and_bootstrap_is_minimal(settings):
+def test_initialization_is_idempotent_and_bootstrap_is_not_persisted(settings):
     service = WorkspaceService(settings)
     assert not settings.bootstrap_config_path.exists()
     first = service.initialize_workspace()
@@ -20,9 +19,9 @@ def test_initialization_is_idempotent_and_bootstrap_is_minimal(settings):
         root = service.get_workspace_root()
         assert all((root / directory).is_dir() for directory in DIRECTORIES)
         assert service.get_database_path().is_file()
-        assert json.loads(settings.bootstrap_config_path.read_text()) == {
-            "workspace_root": str(root)
-        }
+        # Phase 5.1: booting from a missing config only seeds an in-memory default
+        # root; it must never persist a bootstrap selection by itself.
+        assert not settings.bootstrap_config_path.exists()
         assert service.get_storage_path() == root / "storage"
         assert service.get_thumbnail_path().is_dir()
         assert service.get_temp_path().is_dir()
@@ -78,6 +77,8 @@ def test_file_conflicting_directory_and_nested_root_are_rejected(workspace, tmp_
 
 
 def test_config_failure_does_not_switch(workspace, tmp_path, monkeypatch):
+    # An explicit selection is what creates the bootstrap config (Phase 5.1).
+    workspace.set_workspace_root(tmp_path / "first-root")
     previous = workspace.get_info()
     config = workspace.bootstrap.path.read_bytes()
 

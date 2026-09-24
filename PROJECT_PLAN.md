@@ -1,6 +1,15 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 5 — Shot Workspace，已完成，等待用户验收；不进入 Phase 6 Prompt Template。**
+当前开发阶段：**Phase 5.1 — Workspace Root Recovery & Hardening，已完成，等待用户验收；不进入 Phase 6 Prompt Template。**
+
+## Phase 5.1 范围
+
+- 诊断并修复 C / D 环境分叉：普通 Windows 与打包应用读取两份不同 Bootstrap Config，且缺失配置时 `initialize_workspace()` 会把 fallback 静默写成正式选择。
+- 最小代码修复：`initialize_workspace()` 不再写 Bootstrap Config；配置缺失只提供内存默认 root，首次启动仍可用；非法配置明确报错不回退。
+- 经正式 `PUT /api/settings/workspace` 把真实 Workspace Root 恢复为 `D:\AI-Video-Workspace`，不 COPY / MOVE / 覆盖任何数据。
+- 统一配置：用户级 `AVW_BOOTSTRAP_CONFIG_PATH` → `D:\AI-Video-Workspace-Config\config.json`，两个环境解析同一份配置；不修改 APPDATA / HOME / USERPROFILE。
+- 新增 9 项后端用例与完整回归；无新 migration、无 schema 变更、无新依赖。
+- 详细范围、证据与限制见 [Phase 5.1 状态](docs/PHASE_5_1_STATUS.md)。Phase 5.1 COMPLETE，完成后停止，不进入 Phase 6。
 
 ## 依据
 

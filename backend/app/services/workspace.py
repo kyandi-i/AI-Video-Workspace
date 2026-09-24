@@ -101,13 +101,12 @@ class WorkspaceService:
         with self._lock:
             if self._database is not None:
                 return self._info()
+            # A missing bootstrap config only supplies an in-memory default root.
+            # Persisting it here would turn "never selected" into "explicitly selected"
+            # and silently materialize a brand new workspace. Only an explicit user
+            # action (set_workspace_root) may write the bootstrap config.
             root = self.prepare_directories(self.resolve_bootstrap_root())
             database = self._prepare_database(root)
-            try:
-                self.bootstrap.save(root)
-            except Exception:
-                database.dispose()
-                raise
             self._root, self._database = root, database
             return self._info()
 

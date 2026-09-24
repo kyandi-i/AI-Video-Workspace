@@ -2,7 +2,15 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 5：Shot Workspace。** 已支持 Project / Script / Scene / Shot 核心工作流、统一图片 / 视频资产库、托管导入、缩略图、标签及项目 / 镜头绑定。数据保存在本地 SQLite 与 Managed Storage。已支持项目角色、视觉状态、参考资产与镜头状态绑定，以及单镜头生产 Workspace、结构化要求、显式保存和前后镜头导航。Prompt / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
+**当前完成 Phase 6：Prompt Template。Phase 7 NOT STARTED。** 已支持 Project / Script / Scene / Shot 核心工作流、统一资产库、角色 / 状态与单镜头生产 Workspace，以及 Global / Project 模板管理、受控变量与固定 Sample Preview。数据保存在本地 SQLite 与 Managed Storage。AI Prompt Generation / PromptRecord / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
+
+## Prompt Templates
+
+侧栏 **Prompt Templates** 管理全局和项目模板；项目内同名页面展示当前项目与 Global 模板。支持名称 / 描述搜索、Scope / Category 筛选、创建、编辑、Duplicate、Copy Global → Project、软删除与恢复。软删除仍占用名称，复制后独立维护。
+
+Editor 使用纯文本 Textarea；在 Placeholder Help 查看变量说明和示例，点击变量插入当前光标处。支持 `{{main_action}}` / `{{ main_action }}`，未知变量保存失败；正文保留中文和换行，上限 100,000 字符。15 项完整白名单与 API 见 [Phase 6 验收](docs/PHASE_6_STATUS.md)。
+
+**Sample Preview 只做固定示例数据替换，不调用 AI、不保存模板。** Shot Workspace → Browse Templates 可浏览、预览和选择 Global / 当前项目模板；选择仅在当前页面有效，不写 Shot、不生成 Prompt。No new dependency。
 
 ## 环境
 
@@ -78,14 +86,14 @@ backend/
     schemas/          # Pydantic 请求/响应契约
     repositories/     # BaseRepository + 各业务 Repository，默认忽略软删除记录
     services/         # Workflow / AssetService / Workspace；storage/ Service 与 Provider
-    migrations/       # 0001_app_settings → 0002_core_workflow → 0003_asset_library → 0004_characters → 0005_shot_workspace
+    migrations/       # 0001_app_settings → … → 0005_shot_workspace → 0006_prompt_templates
   tests/
 frontend/
   src/
     app/              # Router、Query Provider
     api/              # API 客户端
     components/       # 布局和 shadcn/ui 基础组件
-    features/         # dashboard/settings/projects/scripts/scenes/shots/assets/characters
+    features/         # dashboard/settings/projects/scripts/scenes/shots/assets/characters/templates
     lib/
   tests/              # Playwright 浏览器验收
 scripts/start.py      # 本地启动和子进程清理
@@ -312,7 +320,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini heads
 uv run --locked --project backend alembic -c backend/alembic.ini upgrade head --sql
 ```
 
-当前 head 是 `0005_shot_workspace`，只给 shots 增加四个 nullable TEXT 字段，保留全部 Phase 1–4 数据表及旧列。测试在独立临时数据库中验证 upgrade → downgrade base → upgrade，以及 autogenerate、metadata 一致性、UUID、UTC、软删除、事务回滚和路径安全。自动生成验收在迁移目录副本中运行，不污染正式 revision。
+当前 head 是 `0006_prompt_templates`，仅新增模板表、约束和索引，不 seed。保留 Phase 5 及之前的全部表和数据；测试在独立临时数据库中验证 upgrade → downgrade base → upgrade、0005 → 0006 → 0005 → 0006，以及 autogenerate / metadata 一致性。自动生成验收在迁移目录副本中运行，不污染正式 revision。真实库必须先备份并核对 SHA-256，再只 upgrade。
 
 常用迁移命令（项目根目录；操作的是 bootstrap 当前选中的工作空间）：
 
@@ -323,7 +331,7 @@ uv run --locked --project backend alembic -c backend/alembic.ini check
 uv run --locked --project backend alembic -c backend/alembic.ini revision --autogenerate -m "describe schema change"
 ```
 
-`downgrade 0004_characters` 会移除 Phase 5 四个新要求字段；`downgrade 0003_asset_library` 还会删除 Phase 4 五张角色 / 关联表；`downgrade 0002_core_workflow` 还会删除资产 / 关联表但保留项目层级；`downgrade 0001_app_settings` 会删除全部业务表；`downgrade base` 还会删除设置表。回退只在独立测试 Workspace 中执行。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
+`downgrade 0005_shot_workspace` 会删除模板表；`downgrade 0004_characters` 还会移除 Phase 5 四个要求字段；进一步回退会删除对应阶段业务表。回退只在独立测试 Workspace 中执行，禁止对真实生产库 downgrade。业务模型加入 `app/models/__init__.py` 后才能被 Alembic 发现。跨数据库可迁移性已做 PostgreSQL DDL 编译检查，本阶段未连接真实 PostgreSQL 服务。
 
 浏览器测试需先构建前端，并首次安装 Chromium：
 
@@ -339,6 +347,10 @@ Remove-Item Env:AVW_E2E_MODE
 
 测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。npm test 为每次运行建立 `.workspace/e2e/run-*` 独立配置、数据库与小型图片 / 视频夹具；成功后待服务退出再清理该运行目录，失败保留供排查。直接调用 Playwright 则使用 `.workspace/e2e` 默认隔离目录。
 
+Windows 下 Playwright 回收 webServer 需要系统进程树访问权限。若沙箱日志停在 `Terminating the WebServer` 且进程查询返回 Access denied，应在获准的正常进程环境运行相同隔离配置；不可强制退出并将绿色断言当作 PASS。验收同时要求断言通过、进程正常结束及 exit code 0。
+
+Phase 6 实测：Backend **201/201**，Browser production **43/43**，development **45/45**；lint / build / Ruff / isolated Alembic 全部通过，真实 Workspace 在自动化前后哈希一致。详细证据见 [Phase 6 验收](docs/PHASE_6_STATUS.md)。
+
 隔离要求（Phase 5.1）：pytest 通过 autouse fixture 显式注入 `AVW_WORKSPACE_ROOT` 与 `AVW_BOOTSTRAP_CONFIG_PATH`，Playwright 通过 `webServer.env` 显式注入同样两个变量，并按进程覆盖而非读取用户级设置。因此即使本机已设置生产 `AVW_BOOTSTRAP_CONFIG_PATH`，自动化测试也不会继承或写入真实 Workspace；测试前后对真实 DB、原图、thumbnail 与 backups 的 SHA-256 复核一致。测试不得为求通过而删除或修改用户级环境变量。
 
 覆盖真实 API、断线重试、主题持久化 / 存储受限 / 跨标签同步、只读详情与复制、未知页面返回、响应式布局、两套颜色对比度和截图；开发模式额外覆盖公共组件交互。无需手动先启动测试服务。Phase 2 增加两种主题下的完整业务 CRUD、顺序调整、筛选、删除确认、刷新持久化、表单验证 / pending / API 冲突与 404 测试。Phase 5.1 增加 missing / invalid / 共享 Bootstrap Config 解析、显式切换持久化与重启恢复、测试隔离共 9 项后端用例。
@@ -352,7 +364,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 2 实现约定](docs/PHASE_2_SPEC.md)。Phase 5 已完成，Phase 5.1 已修复 Workspace Root 分叉、旧配置恢复与 fallback 自播种；详见 [Phase 5 验收](docs/PHASE_5_STATUS.md) 与 [Phase 5.1 验收](docs/PHASE_5_1_STATUS.md)。不进入 Phase 6 Prompt Template。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 6 验收](docs/PHASE_6_STATUS.md)。Phase 6 COMPLETE；Phase 5.1 共享配置机制保持，真实 SPF 数据与两条短模板持久化已验证。Phase 7 NOT STARTED，完成后停止，等待用户验收。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

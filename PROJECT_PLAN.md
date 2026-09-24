@@ -1,6 +1,15 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 5.1 — Workspace Root Recovery & Hardening，已完成，等待用户验收；不进入 Phase 6 Prompt Template。**
+当前开发阶段：**Phase 6 — Prompt Template COMPLETE，等待用户验收；Phase 7 NOT STARTED。**
+
+## Phase 6 范围
+
+- GLOBAL / PROJECT PromptTemplate、7 类 Category、CRUD、搜索筛选、软删除恢复、独立复制及 Global → Project Copy。
+- 唯一 15 项 Placeholder Registry、后端校验、Textarea 光标插入、固定 Sample Preview；无 AI 调用。
+- 全局 / 项目模板库、编辑器与草稿关闭保护；Shot Workspace Picker 仅用于当前页面浏览和选择，不写 Shot。
+- 迁移 `0006_prompt_templates`；201 后端 / 43 production / 45 development 全量通过，浏览器正常退出 0；隔离 Alembic 与 lint / build / Ruff 通过。
+- 自动化前后真实 Workspace 6 个文件哈希完全一致；之后备份并只 upgrade 真实库，旧业务行不变；两个指定短模板通过创建、编辑、预览、刷新、重启验收。
+- 完整证据、模型、API、变量、截图及限制见 [Phase 6 状态](docs/PHASE_6_STATUS.md)。No new dependency。完成后停止，不进入 Phase 7。
 
 ## Phase 5.1 范围
 
@@ -71,4 +80,4 @@
 
 Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-完成本阶段后暂停。**不进入 Phase 6 Prompt Template，等待用户验收。**
+完成本阶段后暂停。**Phase 6 COMPLETE；Phase 7 NOT STARTED，等待用户验收。**

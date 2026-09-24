@@ -90,15 +90,17 @@ export function AppShell() {
             <span>Asset Library</span>
           </NavLink>
           {navigation.map(({ label, icon: Icon }) => (
-            <button
+            <NavLink
               key={label}
-              className="nav-item"
-              disabled
+              to="/prompt-templates"
+              className={({ isActive }) =>
+                `nav-item ${isActive ? "active" : ""}`
+              }
               aria-label={label}
             >
               <Icon size={17} />
               <span>{label}</span>
-            </button>
+            </NavLink>
           ))}
         </nav>
         <div className="sidebar-bottom">

@@ -2,6 +2,19 @@
 
 更新日期：2026-09-24
 
+**Phase 6 — Prompt Template COMPLETE。Phase 7 NOT STARTED。**
+
+- 正式 GLOBAL / PROJECT 模板管理、Category、CRUD / search / filters / soft delete / restore / Duplicate / Copy；项目删除隐藏其模板，Global 不受影响。
+- 唯一 15 项变量注册表；后端白名单验证，未知 / 表达式拒绝；原文保存，重复 / 静态 / 中文合法。固定 Sample Preview 仅文本替换，不调用 AI、不写库。
+- 模板库 / 项目入口、Editor、光标插入、关闭草稿保护、Shot Workspace Picker；选择仅为页面内存状态，无 Shot 模板外键 / PromptRecord / Prompt Version。
+- 恢复验证仅修正过期 schema 完整表清单。浏览器收尾定位为 Windows 沙箱拒绝进程树回收；获准在相同隔离配置的正常进程环境运行，无需修改 harness 或业务代码。
+- Backend **201/201**、新增 Browser **7/7**、production **43/43**、development **45/45**，全部 exit 0；lint / build / Ruff check / format 与隔离 Alembic **PASS**。
+- 自动化期间真实 DB / 资产 / thumbnail / 旧备份 **6/6 哈希一致**，共享配置不变。之后创建 `before-phase6-20260924-175114.db`，源与备份 SHA-256 一致，真实库仅 upgrade 到 `0006_prompt_templates`。
+- 所有旧业务表逐行不变，SPF / S13 / 角色 / 6 States / 双层手套关系和结构化字段完整。真实界面只创建 `Seedance Video Generation` 与 `SPF 六宫格分镜模板` 两条短模板，创建 / 编辑 / 预览 / 刷新 / 重启验收通过。
+- Dark / Light、1024 / 1280 验证通过；No new dependency；不修改 Bootstrap / Workspace / ACL，不处理 C Workspace 或 TEMP_WORKSPACE_VERIFY。
+
+详细报告见 [Phase 6 验收](docs/PHASE_6_STATUS.md)。以下为历史阶段记录。
+
 **Phase 5.1 — Workspace Root Recovery & Hardening COMPLETE。已完成，等待用户验收；不进入 Phase 6 Prompt Template。**
 
 - 统一 Bootstrap Config：用户级环境变量 `AVW_BOOTSTRAP_CONFIG_PATH` 指向 `D:\AI-Video-Workspace-Config\config.json`（仅含 `workspace_root`，位于 Workspace 与仓库之外）。普通 Windows 会话与 `%APPDATA%` 被重定向的打包应用因此解析**同一份**配置 → `D:\AI-Video-Workspace`；两个环境实测 `bootstrap_config_path` 与 `workspace_root` 完全一致。
@@ -36,4 +49,4 @@
 
 历史验收：[Phase 5.1](docs/PHASE_5_1_STATUS.md)、[Phase 4](docs/PHASE_4_STATUS.md)、[Phase 3.1](docs/PHASE_3_1_STATUS.md)、[Phase 3](docs/PHASE_3_STATUS.md)、[Phase 2.5](docs/PHASE_2_5_STATUS.md)、[Phase 2](docs/PHASE_2_STATUS.md)、[Phase 1.5](docs/PHASE_1_5_STATUS.md)、[Phase 1](docs/PHASE_1_STATUS.md)、[Phase 0](docs/PHASE_0_STATUS.md)。范围见 [计划索引](PROJECT_PLAN.md) 和 [MVP 规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**Phase 5.1 完成后停止，等待验收。不进入 Phase 6。**
+**Phase 6 完成后停止，等待验收。Phase 7 NOT STARTED。**

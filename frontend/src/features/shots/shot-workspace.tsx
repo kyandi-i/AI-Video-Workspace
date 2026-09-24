@@ -36,6 +36,7 @@ import { shotApi } from "./api";
 import { WorkspaceCharacters } from "./workspace-characters";
 import { WorkspaceReferences } from "./workspace-references";
 import "./shot-workspace.css";
+import { PromptTemplatePicker } from "@/features/templates/template-picker";
 
 interface Workspace {
   shot: Shot;
@@ -187,6 +188,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
           </Button>
         </div>
       </div>
+      <PromptTemplatePicker projectId={shot.project_id} />
       <div className="shot-workspace-grid">
         <aside className="workspace-context">
           <WorkspacePanel

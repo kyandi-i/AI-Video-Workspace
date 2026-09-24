@@ -1,0 +1,171 @@
+.template-library {
+  min-width: 0;
+}
+.template-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(130px, 0.45fr) minmax(
+      190px,
+      0.65fr
+    );
+  gap: 10px;
+}
+.template-deleted-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.template-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.template-row {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  min-width: 0;
+}
+.template-summary {
+  min-width: 0;
+  flex: 1 1 250px;
+  overflow-wrap: anywhere;
+}
+.template-summary h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.template-summary p,
+.template-summary small {
+  color: var(--muted-foreground);
+}
+.template-summary p {
+  white-space: pre-wrap;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.template-summary small {
+  font-size: 11px;
+}
+.template-empty {
+  padding: 36px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  text-align: center;
+}
+.ui-dialog.template-editor,
+.ui-dialog.template-picker {
+  width: min(1100px, calc(100vw - 48px));
+  max-width: none;
+}
+.template-editor form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.template-editor-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+  overflow: auto;
+  max-height: 65vh;
+  padding: 2px 4px 12px;
+}
+.template-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.template-fields label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.template-fields textarea {
+  resize: vertical;
+}
+.template-form-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.template-form-pair > div {
+  min-width: 0;
+}
+.placeholder-panel {
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+  min-width: 0;
+}
+.placeholder-panel h3,
+.template-preview h3,
+.template-shot-entry h3 {
+  font-size: 14px;
+  margin: 4px 0;
+}
+.placeholder-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.placeholder-item code {
+  font-size: 11px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.placeholder-item p {
+  margin: 0;
+  font-size: 12px;
+}
+.placeholder-item small {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.template-preview {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.template-preview pre,
+.template-picker-preview pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 13px/1.7 inherit;
+  padding: 14px;
+  background: var(--muted);
+  border-radius: 6px;
+}
+.template-shot-entry {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.template-picker-body {
+  overflow: auto;
+  max-height: 65vh;
+  display: grid;
+  gap: 16px;
+}
+.template-picker-preview {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1050px) {
+  .template-editor-body {
+    grid-template-columns: minmax(0, 1fr) 225px;
+  }
+  .template-row > .row-actions {
+    flex-wrap: wrap;
+  }
+}

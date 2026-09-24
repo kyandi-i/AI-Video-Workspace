@@ -8,6 +8,7 @@ from app.api.routes.assets import router as assets_router
 from app.api.routes.characters import router as characters_router
 from app.api.routes.health import router as health_router
 from app.api.routes.settings import router as settings_router
+from app.api.routes.templates import router as templates_router
 from app.api.routes.workflow import router as workflow_router
 from app.core.config import Settings
 from app.core.exceptions import register_exception_handlers
@@ -41,6 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(workflow_router, prefix="/api")
     app.include_router(assets_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
+    app.include_router(templates_router, prefix="/api")
 
     dist = settings.frontend_dist.resolve()
 

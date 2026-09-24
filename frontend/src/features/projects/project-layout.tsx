@@ -31,6 +31,7 @@ export function Component() {
           ["shots", "Shots"],
           ["assets", "Assets"],
           ["characters", "Characters"],
+          ["prompt-templates", "Prompt Templates"],
         ].map(([path, label]) => (
           <NavLink
             key={label}

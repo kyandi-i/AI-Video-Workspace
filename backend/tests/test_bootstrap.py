@@ -48,10 +48,11 @@ def test_missing_frontend_has_actionable_error(tmp_path):
         assert client.get("/api/health").status_code == 200
 
 
-def test_phase5_has_only_authorized_business_schema():
+def test_phase6_has_only_authorized_business_schema():
     config = Config(str(REPOSITORY_ROOT / "backend" / "alembic.ini"))
-    assert ScriptDirectory.from_config(config).get_heads() == ["0005_shot_workspace"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["0006_prompt_templates"]
     assert set(Base.metadata.tables) == {
+        "prompt_templates",
         "characters",
         "character_states",
         "character_asset_links",

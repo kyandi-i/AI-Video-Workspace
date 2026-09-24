@@ -13,6 +13,10 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <DashboardPage /> },
       { path: "/settings", element: <SettingsPage /> },
+      {
+        path: "/prompt-templates",
+        lazy: () => import("@/features/templates/templates-page"),
+      },
       { path: "/assets", lazy: () => import("@/features/assets/assets-page") },
       {
         path: "/projects",
@@ -22,6 +26,10 @@ export const router = createBrowserRouter([
         path: "/projects/:projectId",
         lazy: () => import("@/features/projects/project-layout"),
         children: [
+          {
+            path: "prompt-templates",
+            lazy: () => import("@/features/templates/templates-page"),
+          },
           {
             path: "characters",
             lazy: () => import("@/features/characters/characters-page"),

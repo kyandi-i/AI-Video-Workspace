@@ -10,9 +10,11 @@ from app.models.characters import (
     CharacterStateAssetLink,
     ShotCharacterStateLink,
 )
+from app.models.templates import PromptTemplate
 from app.models.workflow import Project, Scene, Script, ScriptNode, Shot
 
 __all__ = [
+    "PromptTemplate",
     "Character",
     "CharacterState",
     "CharacterAssetLink",

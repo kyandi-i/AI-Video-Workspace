@@ -10,10 +10,12 @@ from app.models.characters import (
     CharacterStateAssetLink,
     ShotCharacterStateLink,
 )
+from app.models.prompts import PromptRecord
 from app.models.templates import PromptTemplate
 from app.models.workflow import Project, Scene, Script, ScriptNode, Shot
 
 __all__ = [
+    "PromptRecord",
     "PromptTemplate",
     "Character",
     "CharacterState",

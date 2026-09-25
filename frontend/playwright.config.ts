@@ -29,7 +29,7 @@ export default defineConfig({
       AVW_WORKSPACE_ROOT: resolve(runDirectory, "workspace"),
       AVW_BOOTSTRAP_CONFIG_PATH: resolve(runDirectory, "config.json"),
     },
-    command: `"${python}" ../scripts/start.py --no-browser --port 8766${dev ? " --dev --frontend-port 5174" : ""}`,
+    command: `"${python}" ../scripts/start_e2e.py --no-browser --port 8766${dev ? " --dev --frontend-port 5174" : ""}`,
     url: dev ? "http://127.0.0.1:5174" : "http://127.0.0.1:8766",
     reuseExistingServer: false,
     timeout: 45_000,

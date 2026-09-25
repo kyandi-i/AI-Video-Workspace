@@ -2,7 +2,7 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**当前完成 Phase 6：Prompt Template。Phase 7 NOT STARTED。** 已支持 Project / Script / Scene / Shot 核心工作流、统一资产库、角色 / 状态与单镜头生产 Workspace，以及 Global / Project 模板管理、受控变量与固定 Sample Preview。数据保存在本地 SQLite 与 Managed Storage。AI Prompt Generation / PromptRecord / Storyboard 工作流 / VideoResult 尚未实现。范围见 [PROJECT_PLAN.md](PROJECT_PLAN.md)。
+**Phase 7 — AI Prompt Generation COMPLETE；Phase 8 NOT STARTED。** 支持 AI Provider Settings、真实 Shot Context 渲染、文本 Prompt 生成、一次生成事实持久化与 Copy。生产 DB 已安全升级至 `0007_prompt_generation`；软件 / Fake Provider 验收通过，真实外部 AI 调用仍等待用户明确允许。详细证据与恢复历史见 [Phase 7 验收](docs/PHASE_7_STATUS.md)。
 
 ## Prompt Templates
 
@@ -10,13 +10,21 @@
 
 Editor 使用纯文本 Textarea；在 Placeholder Help 查看变量说明和示例，点击变量插入当前光标处。支持 `{{main_action}}` / `{{ main_action }}`，未知变量保存失败；正文保留中文和换行，上限 100,000 字符。15 项完整白名单与 API 见 [Phase 6 验收](docs/PHASE_6_STATUS.md)。
 
-**Sample Preview 只做固定示例数据替换，不调用 AI、不保存模板。** Shot Workspace → Browse Templates 可浏览、预览和选择 Global / 当前项目模板；选择仅在当前页面有效，不写 Shot、不生成 Prompt。No new dependency。
+**Sample Preview 只做固定示例数据替换，不调用 AI、不保存模板。** Shot Workspace → Browse Templates 可浏览、预览和选择 Global / 当前项目模板；选择仅在当前页面有效，不写 Shot；Prompt panel 使用该模板渲染真实上下文并生成。No new dependency。
+
+## AI Prompt Generation
+
+Settings → AI Provider 填写 OpenAI-compatible Base URL（含所需路径，例如 `/v1`）、Model 和 API Key。Key 输入留空保留原值，勾选清除才移除；普通读取与保存响应不返回 Key。配置保存在 Bootstrap 同级的 `ai-provider.json`，独立于 Workspace / 项目 DB，当前为本机明文文件，不属于项目导出数据。
+
+Shot Workspace → 保存 Requirements → Browse Templates → Actual Rendered Input → Generate → Generated Prompt → Copy Prompt。生成成功保存实际输入、上下文 / 模板快照、输出、Provider / Model 和时间，刷新后可查看最新结果。失败可 Retry 当前操作；模板或上下文改变时需刷新预览。没有版本 / History / selected / final。
+
+已有运行中的服务需要重启以加载新后端代码。项目管理功能无需 AI Key，真实文本生成需要用户自己的 Provider 配置；测试只注入 Fake Provider，不访问真实模型。
 
 ## 环境
 
 - Node.js 22.12+（本次验证使用 24.13.0），npm。
 - Python 3.12+（本次验证使用 3.12.11），[uv](https://docs.astral.sh/uv/getting-started/installation/)。
-- 无需 Docker、外部数据库、账号或 AI API Key。
+- 无需 Docker、外部数据库或应用账号；AI Key 仅用于用户主动发起的真实文本生成。
 
 ## 首次安装
 
@@ -312,8 +320,8 @@ with workspace.resources() as (database, storage):
 
 ```powershell
 uv run --locked --project backend pytest backend/tests
-uv run --locked --project backend ruff check backend/app backend/tests scripts
-uv run --locked --project backend ruff format --check backend/app backend/tests scripts
+uv run --locked --project backend ruff check backend scripts
+uv run --locked --project backend ruff format --check backend scripts
 npm --prefix frontend run lint
 npm --prefix frontend run build
 uv run --locked --project backend alembic -c backend/alembic.ini heads
@@ -345,11 +353,11 @@ npm test
 Remove-Item Env:AVW_E2E_MODE
 ```
 
-测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。npm test 为每次运行建立 `.workspace/e2e/run-*` 独立配置、数据库与小型图片 / 视频夹具；成功后待服务退出再清理该运行目录，失败保留供排查。直接调用 Playwright 则使用 `.workspace/e2e` 默认隔离目录。
+测试经 `scripts/start_e2e.py` 注入 `backend/test_support` 中的 Fake Provider，入口强制校验 Bootstrap / Workspace 均在 `.workspace/e2e` 内。生产入口始终使用真实 Provider 实现。测试自动启动并关闭服务，使用后端 8766 和开发前端 5174 端口，最多 2 个测试 worker。npm test 为每次运行建立 `.workspace/e2e/run-*` 独立配置、数据库与小型图片 / 视频夹具；成功后待服务退出再清理该运行目录，失败保留供排查。直接调用 Playwright 则使用 `.workspace/e2e` 默认隔离目录。
 
 Windows 下 Playwright 回收 webServer 需要系统进程树访问权限。若沙箱日志停在 `Terminating the WebServer` 且进程查询返回 Access denied，应在获准的正常进程环境运行相同隔离配置；不可强制退出并将绿色断言当作 PASS。验收同时要求断言通过、进程正常结束及 exit code 0。
 
-Phase 6 实测：Backend **201/201**，Browser production **43/43**，development **45/45**；lint / build / Ruff / isolated Alembic 全部通过，真实 Workspace 在自动化前后哈希一致。详细证据见 [Phase 6 验收](docs/PHASE_6_STATUS.md)。
+Phase 7 最终实测：Backend **253/253**（原有 201 + 新增 52），Browser 专项 **7/7**、production **50/50**、development **52/52**，均 exit 0；lint / build / Ruff check / format / isolated Alembic 全部通过。自动化前后生产文件 **7/7** 哈希一致；升级后的真实 S13 隔离副本验收前后生产文件 **8/8** 哈希一致。详见 [Phase 7 验收](docs/PHASE_7_STATUS.md)。
 
 隔离要求（Phase 5.1）：pytest 通过 autouse fixture 显式注入 `AVW_WORKSPACE_ROOT` 与 `AVW_BOOTSTRAP_CONFIG_PATH`，Playwright 通过 `webServer.env` 显式注入同样两个变量，并按进程覆盖而非读取用户级设置。因此即使本机已设置生产 `AVW_BOOTSTRAP_CONFIG_PATH`，自动化测试也不会继承或写入真实 Workspace；测试前后对真实 DB、原图、thumbnail 与 backups 的 SHA-256 复核一致。测试不得为求通过而删除或修改用户级环境变量。
 
@@ -364,7 +372,7 @@ git status
 git log --oneline
 ```
 
-查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 6 验收](docs/PHASE_6_STATUS.md)。Phase 6 COMPLETE；Phase 5.1 共享配置机制保持，真实 SPF 数据与两条短模板持久化已验证。Phase 7 NOT STARTED，完成后停止，等待用户验收。
+查看 [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) 和 [Phase 7 验收](docs/PHASE_7_STATUS.md)。Phase 7 COMPLETE；Phase 5.1 共享配置机制保持，SPF 旧业务数据与模板完整。Phase 8 NOT STARTED；本轮到此结束。
 
 初始化参考官方文档：[Vite](https://vite.dev/guide/)、[Tailwind Vite 集成](https://tailwindcss.com/docs/installation/using-vite)、[shadcn/ui 手动安装](https://ui.shadcn.com/docs/installation/manual)、[FastAPI 测试](https://fastapi.tiangolo.com/tutorial/testing/)。
 

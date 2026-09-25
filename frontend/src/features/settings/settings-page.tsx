@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme";
 import { WorkspaceMetadata } from "./workspace-info";
 import { WorkspaceSwitch } from "./workspace-switch";
+import { AISettings } from "./ai-settings";
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -12,6 +13,7 @@ export function SettingsPage() {
     <div className="workspace-page">
       <PageHeader title="设置" description="界面外观与当前工作空间信息。" />
       <div className="settings-grid">
+        <AISettings />
         <WorkspacePanel
           title="界面外观"
           description="偏好仅保存在当前浏览器中。"

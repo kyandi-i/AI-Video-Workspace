@@ -36,7 +36,7 @@ import { shotApi } from "./api";
 import { WorkspaceCharacters } from "./workspace-characters";
 import { WorkspaceReferences } from "./workspace-references";
 import "./shot-workspace.css";
-import { PromptTemplatePicker } from "@/features/templates/template-picker";
+import { PromptPanel } from "@/features/prompts/prompt-panel";
 
 interface Workspace {
   shot: Shot;
@@ -188,7 +188,6 @@ function WorkspaceContent({ data }: { data: Workspace }) {
           </Button>
         </div>
       </div>
-      <PromptTemplatePicker projectId={shot.project_id} />
       <div className="shot-workspace-grid">
         <aside className="workspace-context">
           <WorkspacePanel
@@ -308,6 +307,12 @@ function WorkspaceContent({ data }: { data: Workspace }) {
           <WorkspaceReferences shotId={shot.id} assets={data.assets} />
         </div>
       </div>
+      <PromptPanel
+        shotId={shot.id}
+        projectId={shot.project_id}
+        contextKey={JSON.stringify(data)}
+        dirty={dirty || save.isPending}
+      />
       <WorkspacePanel
         title="Production Status"
         metadata={<StatusBadge status={shot.status} />}

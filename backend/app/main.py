@@ -7,11 +7,14 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes.assets import router as assets_router
 from app.api.routes.characters import router as characters_router
 from app.api.routes.health import router as health_router
+from app.api.routes.prompts import router as prompts_router
 from app.api.routes.settings import router as settings_router
 from app.api.routes.templates import router as templates_router
 from app.api.routes.workflow import router as workflow_router
 from app.core.config import Settings
 from app.core.exceptions import register_exception_handlers
+from app.services.ai.provider import OpenAICompatibleProvider
+from app.services.ai.settings import AISettingsService, LocalAISettingsStorageProvider
 from app.services.workspace import WorkspaceService
 
 
@@ -36,6 +39,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.workspace = workspace
+    app.state.ai_provider = OpenAICompatibleProvider()
+    app.state.ai_settings = AISettingsService(
+        LocalAISettingsStorageProvider(workspace.bootstrap.path)
+    )
     register_exception_handlers(app)
     app.include_router(health_router, prefix="/api")
     app.include_router(settings_router, prefix="/api")
@@ -43,6 +50,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(assets_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
     app.include_router(templates_router, prefix="/api")
+    app.include_router(prompts_router, prefix="/api")
 
     dist = settings.frontend_dist.resolve()
 

@@ -76,7 +76,7 @@ def wait_ready(url: str, processes: list[subprocess.Popen], health: bool = False
     raise RuntimeError(f"Timed out waiting for {url}")
 
 
-def main() -> int:
+def main(*, app_import: str = "app.main:app") -> int:
     parser = argparse.ArgumentParser(description="Run AI Video Workspace locally.")
     parser.add_argument("--dev", action="store_true", help="Run Vite and backend with live reload")
     parser.add_argument("--port", type=int, default=8765, help="Backend port (default: 8765)")
@@ -109,7 +109,7 @@ def main() -> int:
             sys.executable,
             "-m",
             "uvicorn",
-            "app.main:app",
+            app_import,
             "--host",
             "127.0.0.1",
             "--port",

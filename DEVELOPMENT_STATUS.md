@@ -1,6 +1,17 @@
 # 开发状态
 
-更新日期：2026-09-24
+更新日期：2026-09-25
+
+**Phase 7 — AI Prompt Generation COMPLETE。Phase 8 NOT STARTED。**
+
+- AIProvider Protocol / OpenAI-compatible Provider / AIService、独立 AI Settings、实际 Shot Context 与唯一 Phase 6 Renderer 集成、成功生成事实快照、Prompt UI / Retry / Copy 已完成。
+- Recovery 移除非必需 `backend/tests/__init__.py`，共享 Fake 与 E2E 入口移至 `backend/test_support`；旧 pytest 组织和导入不变。原 collection 失败历史完整保留在状态文档。
+- 最终 Backend **253/253**（原有 201 + Phase 7 52），新增 Browser **7/7**，production **50/50**，development **52/52**，全部正常 exit 0。lint / build / Ruff check / format（含 scripts）及隔离 Alembic upgrade / downgrade / upgrade / check / current 全部 PASS。
+- 后补 3 项全部执行；另外补充 INSERT 后 / commit 前故障注入，确认回滚无半条事实，重试仅保存一条。
+- 自动化前后生产文件 **7/7** SHA-256 相等；之后备份且源 / 备份哈希一致，仅 upgrade 真实库到 `0007_prompt_generation`。17 张旧业务表逐行不变，integrity=ok，FK=0。
+- 使用真实 SPF S13 的隔离副本和现有 SPF 模板完成实际上下文 → Fake Generate → persistence → refresh → Copy；没有添加资产或写生产生成记录。验收前后生产 **8/8** 文件哈希相等。
+- API Key 仅独立本机明文配置；GET / PUT 不回显，未写入生产 AI 配置。真实外部 AI 验收 **PENDING USER EXPLICIT APPROVAL**。
+- 文件、schema、API、测试、备份路径、已知并发限制详见 [Phase 7 验收与恢复历史](docs/PHASE_7_STATUS.md)。用户原有 HANDOFF.md 修改保持且排除提交。下方为历史阶段记录。
 
 **Phase 6 — Prompt Template COMPLETE。Phase 7 NOT STARTED。**
 

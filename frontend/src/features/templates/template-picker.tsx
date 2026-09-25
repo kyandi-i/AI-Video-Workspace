@@ -8,11 +8,19 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { QueryState, QueryErrors } from "@/components/common/query-state";
-import { initialFilters, useTemplates } from "./api";
+import { initialFilters, useTemplates, type Template } from "./api";
 import { SamplePreview, TemplateFilters, TemplateSummary } from "./components";
 import "./templates.css";
 
-export function PromptTemplatePicker({ projectId }: { projectId: string }) {
+export function PromptTemplatePicker({
+  projectId,
+  onSelect,
+  disabled = false,
+}: {
+  projectId: string;
+  onSelect?: (template: Template) => void;
+  disabled?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState(initialFilters);
   const [selectedId, setSelectedId] = useState("");
@@ -28,7 +36,11 @@ export function PromptTemplatePicker({ projectId }: { projectId: string }) {
     <section className="template-shot-entry" aria-label="Prompt Template">
       <div className="row-actions">
         <h3>Prompt Template</h3>
-        <Button variant="secondary" onClick={() => setOpen(true)}>
+        <Button
+          variant="secondary"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+        >
           Browse Templates
         </Button>
         {selectedId && (
@@ -66,6 +78,7 @@ export function PromptTemplatePicker({ projectId }: { projectId: string }) {
                           onClick={() => {
                             setSelectedId(t.id);
                             setPreviewId(t.id);
+                            onSelect?.(t);
                           }}
                         >
                           {selectedId === t.id ? "Selected" : "Select Template"}

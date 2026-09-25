@@ -1,0 +1,32 @@
+.prompt-panel {
+  min-width: 0;
+}
+.prompt-panel .panel-content {
+  display: grid;
+  gap: 12px;
+}
+.prompt-panel pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--background);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.prompt-panel details summary {
+  cursor: pointer;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.prompt-result {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}

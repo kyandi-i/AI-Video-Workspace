@@ -1,6 +1,15 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 6 — Prompt Template COMPLETE，等待用户验收；Phase 7 NOT STARTED。**
+当前开发阶段：**Phase 7 — AI Prompt Generation COMPLETE；Phase 8 NOT STARTED。**
+
+## Phase 7 范围与最终验收
+
+- IN：OpenAI-compatible Settings / AIProvider / AIService、真实 Shot Context、复用唯一 Phase 6 Renderer、生成一次事实、最新结果读取、Copy、当前操作 Retry。
+- OUT：版本号、History UI、版本编辑比较、最终采用、Storyboard / VideoResult、图片或视频生成 API。
+- 独立本地 AI 配置与业务 Workspace 分离；PromptRecord 为成功事实快照，不建立版本链。不增加 OS keychain、依赖或后台任务框架。
+- Recovery 恢复旧 pytest 导入组织；Backend 253、Browser production 50 / development 52、专项 7，完整通过。lint / build / Ruff / isolated Alembic PASS。
+- 生产自动化期间 7/7 哈希不变；备份相等后只 upgrade 至 0007，旧业务行不变。真实 S13 隔离副本 Fake 全链验收 PASS，期间生产 8/8 哈希不变。
+- 真实外部 AI 未调用，等待用户明确许可；不影响本阶段软件 / Fake 验收完成。失败历史、恢复过程与限制见 [Phase 7 状态](docs/PHASE_7_STATUS.md)。
 
 ## Phase 6 范围
 
@@ -80,4 +89,4 @@
 
 Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-完成本阶段后暂停。**Phase 6 COMPLETE；Phase 7 NOT STARTED，等待用户验收。**
+当前停在 **Phase 7 COMPLETE**。软件与 Fake 验收完成；真实外部 AI 调用待用户明确允许。**Phase 8 NOT STARTED，不自动推进。**

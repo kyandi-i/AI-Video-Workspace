@@ -7,11 +7,12 @@ export async function requestJson<T>(
   method = "GET",
   data?: unknown,
   file?: Blob,
+  timeoutMs?: number,
 ): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`/api${path}`, {
-      signal: AbortSignal.timeout(file ? 300_000 : 8_000),
+      signal: AbortSignal.timeout(timeoutMs ?? (file ? 300_000 : 8_000)),
       method,
       headers: file
         ? { "Content-Type": "application/octet-stream" }

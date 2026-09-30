@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.ai import (
+    PromptEdit,
     PromptGenerate,
     PromptPreview,
     PromptPreviewRequest,
     PromptRead,
+    PromptRegenerate,
     ProviderRead,
     ProviderUpdate,
 )
@@ -53,3 +55,23 @@ def latest(shot_id: UUID, service: AI):
 @router.get("/prompts/{identifier}", response_model=PromptRead)
 def detail(identifier: UUID, service: AI):
     return service.detail(identifier)
+
+
+@router.get("/shots/{shot_id}/prompts", response_model=list[PromptRead])
+def history(shot_id: UUID, service: AI, prompt_type: str | None = None):
+    return service.history(shot_id, prompt_type)
+
+
+@router.patch("/prompts/{identifier}", response_model=PromptRead)
+def edit(identifier: UUID, data: PromptEdit, service: AI):
+    return service.edit(identifier, data)
+
+
+@router.post("/prompts/{identifier}/regenerate", response_model=PromptRead)
+def regenerate(identifier: UUID, data: PromptRegenerate, service: AI):
+    return service.regenerate(identifier, data)
+
+
+@router.post("/prompts/{identifier}/select", response_model=PromptRead)
+def select_prompt(identifier: UUID, service: AI):
+    return service.select(identifier)

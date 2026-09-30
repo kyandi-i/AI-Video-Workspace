@@ -2,7 +2,11 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**Phase 7 — AI Prompt Generation COMPLETE；Phase 8 NOT STARTED。** 支持 AI Provider Settings、真实 Shot Context 渲染、文本 Prompt 生成、一次生成事实持久化与 Copy。生产 DB 已安全升级至 `0007_prompt_generation`；软件 / Fake Provider 验收通过，真实外部 AI 调用仍等待用户明确允许。详细证据与恢复历史见 [Phase 7 验收](docs/PHASE_7_STATUS.md)。
+**Phase 8 — Prompt Versioning COMPLETE；Phase 9 NOT STARTED。** 支持 Prompt History、人工编辑、Regenerate、采用版本与 Copy。生产 DB 已备份并安全升级到 `0008_prompt_versioning`，18 张旧表数据不变；软件与真实 S13 隔离副本 Fake 验收全部通过。真实外部 AI 仍等待用户明确允许。首次失败与 Recovery 完整证据见 [Phase 8 状态](docs/PHASE_8_STATUS.md)。
+
+Shot Workspace → **Version History** 查看各类型整数版本、Selected / Edited、模板和生成来源。**Edit Prompt → Save Prompt** 只保存 `edited_content`，原始 `generated_content` 与快照保持。**Regenerate** 使用来源模板当前内容与最新已保存镜头上下文创建新版本，成功后自动采用；手工 **Select Prompt** 可改用历史版本。同一 Shot / Prompt Type 的版本号唯一，活跃记录最多一个 Selected。
+
+**Copy Prompt** 复制正在查看版本的已保存 `edited_content ?? generated_content`；**Copy Selected Prompt** 复制当前查看类型的采用版本。空字符串编辑有效，不回退到原生成文本。Windows 剪贴板可能把 LF 表示为 CRLF，中文、空行、空格和段落保持。未保存 Prompt 修改受到页面离开与历史切换保护；失败操作需显式 Retry。
 
 ## Prompt Templates
 
@@ -16,7 +20,7 @@ Editor 使用纯文本 Textarea；在 Placeholder Help 查看变量说明和示�
 
 Settings → AI Provider 填写 OpenAI-compatible Base URL（含所需路径，例如 `/v1`）、Model 和 API Key。Key 输入留空保留原值，勾选清除才移除；普通读取与保存响应不返回 Key。配置保存在 Bootstrap 同级的 `ai-provider.json`，独立于 Workspace / 项目 DB，当前为本机明文文件，不属于项目导出数据。
 
-Shot Workspace → 保存 Requirements → Browse Templates → Actual Rendered Input → Generate → Generated Prompt → Copy Prompt。生成成功保存实际输入、上下文 / 模板快照、输出、Provider / Model 和时间，刷新后可查看最新结果。失败可 Retry 当前操作；模板或上下文改变时需刷新预览。没有版本 / History / selected / final。
+Shot Workspace → 保存 Requirements → Browse Templates → Actual Rendered Input → Generate → Generated Prompt → Copy Prompt。生成成功保存实际输入、上下文 / 模板快照、输出、Provider / Model 和时间，刷新后可查看历史与采用结果。失败可 Retry 当前操作；模板或上下文改变时需刷新预览。Generate 与 Regenerate 都创建下一版本并采用，不覆盖旧记录。
 
 已有运行中的服务需要重启以加载新后端代码。项目管理功能无需 AI Key，真实文本生成需要用户自己的 Provider 配置；测试只注入 Fake Provider，不访问真实模型。
 
@@ -94,14 +98,14 @@ backend/
     schemas/          # Pydantic 请求/响应契约
     repositories/     # BaseRepository + 各业务 Repository，默认忽略软删除记录
     services/         # Workflow / AssetService / Workspace；storage/ Service 与 Provider
-    migrations/       # 0001_app_settings → … → 0005_shot_workspace → 0006_prompt_templates
+    migrations/       # 0001_app_settings → … → 0007_prompt_generation → 0008_prompt_versioning
   tests/
 frontend/
   src/
     app/              # Router、Query Provider
     api/              # API 客户端
     components/       # 布局和 shadcn/ui 基础组件
-    features/         # dashboard/settings/projects/scripts/scenes/shots/assets/characters/templates
+    features/         # dashboard/settings/projects/scripts/scenes/shots/assets/characters/templates/prompts
     lib/
   tests/              # Playwright 浏览器验收
 scripts/start.py      # 本地启动和子进程清理

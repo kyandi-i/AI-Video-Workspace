@@ -70,6 +70,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
   const { shot, scene } = data;
   const [values, setValues] = useState(() => formValues(shot));
   const [saved, setSaved] = useState(() => formValues(shot));
+  const [promptProtected, setPromptProtected] = useState(false);
   const busy = useRef(false);
   const dirty = JSON.stringify(values) !== JSON.stringify(saved);
   const client = useQueryClient();
@@ -104,16 +105,16 @@ function WorkspaceContent({ data }: { data: Workspace }) {
       ]);
     },
   });
-  const blocker = useBlocker(dirty || save.isPending);
+  const blocker = useBlocker(dirty || save.isPending || promptProtected);
   useBeforeUnload(
     useCallback(
       (event) => {
-        if (dirty || busy.current) {
+        if (dirty || busy.current || promptProtected) {
           event.preventDefault();
           event.returnValue = "";
         }
       },
-      [dirty],
+      [dirty, promptProtected],
     ),
   );
   const set = (key: keyof typeof values, value: string) =>
@@ -312,6 +313,8 @@ function WorkspaceContent({ data }: { data: Workspace }) {
         projectId={shot.project_id}
         contextKey={JSON.stringify(data)}
         dirty={dirty || save.isPending}
+        promptProtected={promptProtected}
+        onProtectedChange={setPromptProtected}
       />
       <WorkspacePanel
         title="Production Status"
@@ -354,7 +357,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
             <DialogDescription>
               {save.isPending
                 ? "正在保存，请稍候。"
-                : "离开将丢弃未保存的镜头修改。留在此页可继续编辑或保存。"}
+                : "离开将丢弃未保存的镜头或 Prompt 修改。留在此页可继续编辑或保存。"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

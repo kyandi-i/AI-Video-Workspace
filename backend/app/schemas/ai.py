@@ -78,6 +78,10 @@ class PromptGenerate(PromptPreviewRequest):
 
 
 class PromptRead(Read):
+    version: int
+    edited_content: str | None
+    effective_content: str
+    is_selected: bool
     shot_id: UUID
     template_id: UUID
     template_name: str
@@ -89,3 +93,12 @@ class PromptRead(Read):
     generated_content: str
     provider: str
     model_name: str
+
+
+class PromptEdit(Input):
+    edited_content: str | None = Field(max_length=500_000)
+
+
+class PromptRegenerate(Input):
+    operation_id: UUID
+    input_hash: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]

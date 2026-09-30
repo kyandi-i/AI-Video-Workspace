@@ -1,15 +1,46 @@
 from uuid import UUID
 
-from sqlalchemy import JSON, ForeignKey, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
 
 
 class PromptRecord(BaseModel):
-    """Immutable successful generation fact; no versioning/selection/edit APIs."""
+    """Generation facts plus a mutable human edit and selection."""
 
     __tablename__ = "prompt_records"
+    __table_args__ = (
+        UniqueConstraint("shot_id", "prompt_type", "version", name="uq_prompt_version"),
+        CheckConstraint("version > 0", name="prompt_version_positive"),
+        Index(
+            "uq_prompt_selected",
+            "shot_id",
+            "prompt_type",
+            unique=True,
+            sqlite_where=text("is_selected = 1 AND deleted_at IS NULL"),
+            postgresql_where=text("is_selected = true AND deleted_at IS NULL"),
+        ),
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    edited_content: Mapped[str | None] = mapped_column(Text)
+    is_selected: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    @property
+    def effective_content(self) -> str:
+        return self.edited_content if self.edited_content is not None else self.generated_content
+
     shot_id: Mapped[UUID] = mapped_column(ForeignKey("shots.id"), index=True)
     template_id: Mapped[UUID] = mapped_column(ForeignKey("prompt_templates.id"), index=True)
     template_name: Mapped[str] = mapped_column(String(255))

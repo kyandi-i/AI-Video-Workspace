@@ -1,6 +1,15 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 7 — AI Prompt Generation COMPLETE；Phase 8 NOT STARTED。**
+当前开发阶段：**Phase 8 — Prompt Versioning COMPLETE；Phase 9 NOT STARTED。**
+
+## Phase 8 范围与最终验收
+
+- 仅 Prompt Versioning / History / Edit / Regenerate / Selection / Copy；不进入 Storyboard / Video / 分支或审批工作流。
+- 采用规格第 25 / 26 节的 `version`、`edited_content`、`is_selected`，不另建 final 状态。Generate / Regenerate 成功自动采用新版本，人工编辑保留同一版本及原始生成事实。
+- 首次浏览器 Copy 因 Windows CRLF/LF 比较失败而停止；Recovery 实测页面/持久化/writeText 均原文不变，仅 readText 转为 CRLF。只规范测试行尾，未改业务实现，完整保留失败历史。
+- 最终后端专项 33/33、全量 286/286、浏览器专项 6/6、production 56/56、development 58/58，全部正常退出0；lint / build / Ruff / isolated Alembic PASS。
+- 自动化前后生产10/10哈希不变；源与备份相等后只upgrade到0008，18张旧表逐行不变。真实S13隔离副本Fake版本工作流及新服务进程重启验收通过，生产11/11哈希不变、无Fake记录。
+- 完整模型、API、证据及限制：[Phase 8 状态](docs/PHASE_8_STATUS.md)。本阶段完成后停止，不进入Phase 9。
 
 ## Phase 7 范围与最终验收
 
@@ -89,4 +98,4 @@
 
 Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-当前停在 **Phase 7 COMPLETE**。软件与 Fake 验收完成；真实外部 AI 调用待用户明确允许。**Phase 8 NOT STARTED，不自动推进。**
+当前停在 **Phase 8 COMPLETE**。真实外部 AI 调用待用户明确允许。**Phase 9 NOT STARTED，不自动推进。**

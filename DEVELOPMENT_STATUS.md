@@ -1,6 +1,27 @@
 # 开发状态
 
-更新日期：2026-09-25
+更新日期：2026-09-30
+
+**Phase 8 — Prompt Versioning COMPLETE。Phase 9 NOT STARTED。**
+
+- Recovery 证明 Copy 的唯一区别是 Windows Clipboard API 将 LF 表示为 CRLF；数据库、effective content、DOM textContent、writeText 入参逐字一致。仅浏览器断言规范 `\r\n → \n`，不 trim、不折叠空白，保留中文/标点/首尾空格/空行/末尾换行。
+- 最终 Backend Phase 8 **33/33 PASS**，Full **286/286 PASS**；Browser Phase 8 **6/6**、production **56/56**、development **58/58 PASS**，均 exit 0。Frontend lint/build、Ruff check/format、独立 Alembic CLI 全通过。
+- 0007中实际插入6条旧生成事实，覆盖2类Prompt和软删除历史；0008升级/回退/回升、check/current、唯一约束真实冲突和全部旧事实保持通过。
+- 自动化前后生产/Bootstrap/HANDOFF **10/10哈希不变**；备份 `before-phase8-20260929-231526.db` 与源SHA-256相等后只upgrade至 `0008_prompt_versioning`。18张旧表逐行不变，integrity=ok、FK=0；真实SPF/S13、四项需求、角色6状态和双层手套关联完整。
+- 真实S13隔离副本完成V1/Edit/Save/Refresh/Copy/Regenerate V2/选择V1与V2/刷新/新服务进程重启；生产 **11/11哈希不变**，生产Prompt为0条，无Fake污染。真实外部AI未调用，仍PENDING USER EXPLICIT APPROVAL。
+- 5张无关测试截图已恢复，HANDOFF.md用户原有修改哈希保持且排除提交。模型/API/完整文件及已知限制见 [Phase 8最终验收](docs/PHASE_8_STATUS.md)。
+
+下节保留首次停工历史，最终状态以上述Recovery为准。
+
+**Phase 8 — Prompt Versioning NOT COMPLETE / STOPPED。Phase 9 NOT STARTED。**
+
+- 已实现但未完成验收：线性版本、稳定旧记录回填、历史 / 编辑 / Regenerate / Select API、版本 UI 与 Copy effective content。`generated_content` 和生成快照保持；编辑只写 `edited_content`；同 Shot / Type 的版本唯一、活跃 Selected 最多一个。
+- Backend Phase 8 **30/30 PASS**；Full **283/283 PASS**（旧 253 + 新 30，exit 0）。Frontend lint / build、Ruff check / format PASS。
+- Browser Phase 8 **0/6 PASS：1 failed、5 did not run，exit 1**。首个 Dark 1024 用例在多行 Copy 检查中读回 CRLF，期望 LF。按本轮 Failure-stop 停止；未修改该断言后继续，未运行 Browser production / development 全量、独立 Alembic CLI 或真实 S13 隔离副本验收。
+- 自动化前后生产 8 个文件 + Bootstrap / HANDOFF 共 **10/10 SHA-256 相等**。生产 revision 仍 `0007_prompt_generation`；未创建 Phase 8 生产备份或执行迁移。无真实外部 AI 调用。
+- 新 revision `0008_prompt_versioning` 仅在隔离测试库运行；0/1/5 条旧记录回退回升 / check 已通过。未提交，用户原有 `M HANDOFF.md` 哈希不变。详细事实与待办见 [Phase 8 状态](docs/PHASE_8_STATUS.md)。
+
+以下为此前阶段记录。
 
 **Phase 7 — AI Prompt Generation COMPLETE。Phase 8 NOT STARTED。**
 

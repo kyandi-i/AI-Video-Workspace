@@ -4,7 +4,7 @@ import json
 from app.core.exceptions import AppError
 from app.models.prompts import PromptRecord
 from app.repositories.prompts import PromptRepository
-from app.schemas.ai import PromptPreview
+from app.schemas.ai import PromptGenerate, PromptPreview
 from app.services.ai.context import build_shot_context
 from app.services.ai.provider import AIProvider
 from app.services.ai.settings import AISettingsService
@@ -57,6 +57,36 @@ class AIService:
         ShotService(self.session).shot(record.shot_id)
         return record
 
+    def history(self, shot_id, prompt_type=None):
+        ShotService(self.session).shot(shot_id)
+        return self.records.history(shot_id, prompt_type)
+
+    def edit(self, identifier, data):
+        return self.records.update(self.detail(identifier), edited_content=data.edited_content)
+
+    def select(self, identifier):
+        record = self.detail(identifier)
+        self.records.clear_selection(record.shot_id, record.prompt_type)
+        return self.records.update(record, is_selected=True)
+
+    def regenerate(self, identifier, data):
+        source = self.detail(identifier)
+        if data.operation_id == source.id:
+            raise AppError("AI_OPERATION_CONFLICT", "重新生成必须使用新的操作标识。", 409)
+        template = PromptTemplateService(self.session).detail(source.template_id)
+        if template.category.value != source.prompt_type:
+            raise AppError(
+                "PROMPT_TYPE_CHANGED", "来源模板类型已变更，请选择模板重新 Generate。", 409
+            )
+        return self.generate(
+            source.shot_id,
+            PromptGenerate(
+                template_id=source.template_id,
+                operation_id=data.operation_id,
+                input_hash=data.input_hash,
+            ),
+        )
+
     def generate(self, shot_id, data):
         ShotService(self.session).shot(shot_id)
         existing = self.records.get(data.operation_id)
@@ -106,6 +136,11 @@ class AIService:
         # Do not persist an accidentally echoed credential in ordinary project data.
         if config.api_key.get_secret_value() in content:
             raise AppError("AI_INVALID_RESPONSE", "AI Provider 返回内容不可安全保存。", 502)
+        # The request's Workspace lease and transaction cover allocation, insert and
+        # selection. This write acquires SQLite's writer lock before reading MAX;
+        # cross-process stale read transactions fail/rollback instead of duplicating.
+        self.records.clear_selection(shot_id, template.category.value)
+        version = self.records.max_version(shot_id, template.category.value) + 1
         return self.records.add(
             PromptRecord(
                 id=data.operation_id,
@@ -120,5 +155,7 @@ class AIService:
                 generated_content=content,
                 provider=self.provider.name,
                 model_name=config.model,
+                version=version,
+                is_selected=True,
             )
         )

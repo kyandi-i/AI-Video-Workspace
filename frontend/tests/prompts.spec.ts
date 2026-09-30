@@ -7,6 +7,19 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Windows Clipboard API represents LF as CRLF. Preserve every other character,
+// including blank lines, leading/trailing spaces and the final newline.
+async function expectClipboard(page: Page, content: string) {
+  await expect
+    .poll(async () =>
+      (await page.evaluate(() => navigator.clipboard.readText())).replace(
+        /\r\n/g,
+        "\n",
+      ),
+    )
+    .toBe(content.replace(/\r\n/g, "\n"));
+}
+
 async function configure(
   request: APIRequestContext,
   key = "fake-browser-credential",
@@ -197,8 +210,8 @@ for (const theme of ["dark", "light"] as const)
         fullPage: true,
       });
       await expect(
-        page.getByText("Prompt History", { exact: true }),
-      ).toHaveCount(0);
+        page.getByRole("heading", { name: "Version History", exact: true }),
+      ).toBeVisible();
     });
   }
 
@@ -252,4 +265,208 @@ test("unsaved requirements block generation and missing key is actionable", asyn
   expect(
     await (await request.get(`/api/shots/${shot.id}/prompts/latest`)).json(),
   ).toBeNull();
+});
+
+async function generateVersion(
+  request: APIRequestContext,
+  shotId: string,
+  templateId: string,
+) {
+  const preview = await (
+    await request.post(`/api/shots/${shotId}/prompts/preview`, {
+      data: { template_id: templateId },
+    })
+  ).json();
+  const response = await request.post(`/api/shots/${shotId}/prompts/generate`, {
+    data: {
+      template_id: templateId,
+      input_hash: preview.input_hash,
+      operation_id: crypto.randomUUID(),
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  return response.json();
+}
+
+for (const theme of ["dark", "light"] as const)
+  for (const width of [1024, 1280]) {
+    test(`Phase 8 history edit regenerate select Copy ${theme} ${width}`, async ({
+      page,
+      request,
+      context,
+    }) => {
+      await configure(request);
+      const { shot, template } = await seed(request);
+      const first = await generateVersion(request, shot.id, template.id);
+      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/shots/${shot.id}/workspace`);
+      if (theme === "light")
+        await page.getByRole("button", { name: "切换到浅色模式" }).click();
+      const list = page.getByLabel("Version History", { exact: true });
+      const v1 = list.getByRole("button", {
+        name: `View V1 ${template.name}`,
+        exact: true,
+      });
+      await expect(v1).toContainText("Selected");
+      await page
+        .getByRole("button", { name: "Copy Prompt", exact: true })
+        .click();
+      await expectClipboard(page, first.generated_content);
+      await page
+        .getByRole("button", { name: "Edit Prompt", exact: true })
+        .click();
+      const edited = "  中文编辑，保留换行！\n\n双门互锁；角色不看镜头。  \n";
+      await page
+        .getByRole("textbox", { name: "Edit Prompt", exact: true })
+        .fill(edited);
+      await expect(
+        page.getByRole("button", { name: "Regenerate", exact: true }),
+      ).toBeDisabled();
+      await page
+        .getByRole("button", { name: "Save Prompt", exact: true })
+        .click();
+      const result = page.getByLabel("Generated Prompt result", {
+        exact: true,
+      });
+      await expect(result).toHaveText(edited);
+      await expect(v1).toContainText("Edited");
+      await page.reload();
+      await expect(result).toHaveText(edited);
+      await page
+        .getByRole("button", { name: "Copy Prompt", exact: true })
+        .click();
+      await expectClipboard(page, edited);
+      await page
+        .getByRole("textbox", { name: "Main Action", exact: true })
+        .fill("新动作：等待内门关闭。");
+      await page
+        .getByRole("button", { name: "Save Changes", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "Regenerate", exact: true }),
+      ).toBeEnabled();
+      await page
+        .getByRole("button", { name: "Regenerate", exact: true })
+        .click();
+      const v2 = list.getByRole("button", {
+        name: `View V2 ${template.name}`,
+        exact: true,
+      });
+      await expect(v2).toContainText("Selected");
+      await expect(v1).not.toContainText("Selected");
+      const versions = await (
+        await request.get(`/api/shots/${shot.id}/prompts`)
+      ).json();
+      expect(versions.map((r: { version: number }) => r.version)).toEqual([
+        2, 1,
+      ]);
+      expect(versions[1].generated_content).toBe(first.generated_content);
+      expect(versions[1].context_json).toEqual(first.context_json);
+      expect(versions[1].edited_content).toBe(edited);
+      expect(versions[0].context_json.main_action).toBe(
+        "新动作：等待内门关闭。",
+      );
+      await page
+        .getByRole("button", { name: "Copy Prompt", exact: true })
+        .click();
+      await expectClipboard(page, versions[0].effective_content);
+      await v1.click();
+      await expect(result).toHaveText(edited);
+      await page
+        .getByRole("button", { name: "Copy Prompt", exact: true })
+        .click();
+      await expectClipboard(page, edited);
+      await page
+        .getByRole("button", { name: "Select Prompt", exact: true })
+        .click();
+      await expect(v1).toContainText("Selected");
+      await expect(v2).not.toContainText("Selected");
+      await page
+        .getByRole("button", { name: "Copy Selected Prompt", exact: true })
+        .click();
+      await expectClipboard(page, edited);
+      await page.reload();
+      await expect(result).toHaveText(edited);
+      await v2.click();
+      await page
+        .getByRole("button", { name: "Select Prompt", exact: true })
+        .click();
+      await expect(v2).toContainText("Selected");
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await page.screenshot({
+        path: `test-results/phase8-${theme}-${width}.png`,
+        fullPage: true,
+      });
+    });
+  }
+
+test("Phase 8 dirty Prompt protects history switch and route leave", async ({
+  page,
+  request,
+}) => {
+  await configure(request);
+  const { shot, template } = await seed(request);
+  await generateVersion(request, shot.id, template.id);
+  await generateVersion(request, shot.id, template.id);
+  await page.goto(`/shots/${shot.id}/workspace`);
+  await page.getByRole("button", { name: "Edit Prompt", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Edit Prompt", exact: true })
+    .fill("未保存的 Prompt");
+  await page
+    .getByRole("button", { name: `View V1 ${template.name}`, exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Unsaved changes" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stay", exact: true }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Edit Prompt", exact: true }),
+  ).toHaveValue("未保存的 Prompt");
+  await page.getByRole("link", { name: "AI Provider Settings →" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stay", exact: true }).click();
+  await page
+    .getByRole("button", { name: `View V1 ${template.name}`, exact: true })
+    .click();
+  await dialog
+    .getByRole("button", { name: "Discard and Switch", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Generated Prompt · V1", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "Edit Prompt", exact: true }),
+  ).toHaveCount(0);
+});
+
+test("Phase 8 failed regenerate keeps history and explicit Retry", async ({
+  page,
+  request,
+}) => {
+  await configure(request);
+  const { shot, template } = await seed(request);
+  await generateVersion(request, shot.id, template.id);
+  await request.patch(`/api/shots/${shot.id}`, {
+    data: { main_action: "[[FAKE_RETRY]] 新动作" },
+  });
+  await page.goto(`/shots/${shot.id}/workspace`);
+  await page.getByRole("button", { name: "Regenerate", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("超时");
+  expect(
+    await (await request.get(`/api/shots/${shot.id}/prompts`)).json(),
+  ).toHaveLength(1);
+  await page
+    .getByRole("button", { name: "Retry Regeneration", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: `View V2 ${template.name}`, exact: true }),
+  ).toContainText("Selected");
+  expect(
+    await (await request.get(`/api/shots/${shot.id}/prompts`)).json(),
+  ).toHaveLength(2);
 });

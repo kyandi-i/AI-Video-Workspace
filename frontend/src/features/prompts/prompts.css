@@ -30,3 +30,36 @@
   gap: 10px;
   min-width: 0;
 }
+.prompt-history {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+}
+.prompt-history button {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: left;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.prompt-history button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--accent);
+}
+.prompt-history small {
+  width: 100%;
+  color: var(--muted-foreground);
+}
+.prompt-fact-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 240px;
+  overflow: auto;
+  font-size: 12px;
+}

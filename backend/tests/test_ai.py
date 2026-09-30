@@ -248,7 +248,9 @@ def test_generation_fact_retry_latest_restart_and_snapshot(client, settings):
     assert record["template_content"] == template["template_content"]
     assert record["context_json"]["main_action"] == shot["main_action"]
     assert record["generated_content"].startswith("FAKE")
-    assert not {"version", "edited_content", "is_selected"} & set(record)
+    assert record["version"] == 1
+    assert record["edited_content"] is None
+    assert record["is_selected"] is True
     assert client.post(url, json=data).json() == record
     assert len(client.app.state.ai_provider.calls) == 1
     assert client.app.state.ai_provider.calls[0][0] == record["rendered_input"]

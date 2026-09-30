@@ -47,11 +47,18 @@ class StateReference(Read):
     name: str
 
 
+class StoryboardReference(Read):
+    shot_id: UUID
+    version: int
+    is_selected: bool
+
+
 class AssetDetail(AssetRead):
     projects: list[ProjectRead] = []
     shots: list[ShotRead] = []
     characters: list[CharacterReference] = []
     character_states: list[StateReference] = []
+    storyboards: list[StoryboardReference] = []
 
 
 class AssetLinkCreate(Input):

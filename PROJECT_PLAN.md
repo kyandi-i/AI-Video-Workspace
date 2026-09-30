@@ -1,6 +1,17 @@
 # 项目计划索引
 
-当前开发阶段：**Phase 8 — Prompt Versioning COMPLETE；Phase 9 NOT STARTED。**
+当前开发阶段：**Phase 9 — Storyboard Workflow COMPLETE；Phase 10 NOT STARTED。**
+
+## Phase 9 范围与最终验收
+
+- Recovery只把首个History缩略图locator改为精确可访问名称，原失败点已通过。专项随后在详情原图的另一处宽泛role locator匹配原图与Lucide X，最终1/6 PASS、5 failed；按Failure-stop再次停止。没有业务重写、生产升级或提交。
+- Recovery 2精确修复详情原图locator后，Phase9 Browser 6/6、Backend 28/28、full 314/314及静态检查通过。Production Browser full随后因Phase9改变旧Asset删除提示（`解除绑定`→`解除引用`）导致两个旧用例失败；这是Phase9回归，按Failure-stop中止。Production仍0008，未进入Phase10。
+- Recovery 3恢复统一兼容文案`请先解除绑定`，保留Storyboard引用详情、ASSET_IN_USE和分类保护；旧Asset dark/light原失败用例2/2通过。最终Backend 28/28、full 314/314、Phase9 Browser 6/6、production 62/62、development 64/64及全部静态/迁移检查通过。
+
+- 外部六宫格结果导回，Asset为唯一媒体事实；Storyboard按Shot整数版本、固定来源PromptRecord、最多一个Selected。无图片生成或Phase10 VideoResult。
+- 用户明确冻结：导入时同一事务确保ProjectAssetLink、ShotAssetLink和Storyboard；之后三者独立生命周期，复用Link、不自动回收、不增加owner/source字段。删除Storyboard保留Link/Asset，解绑Reference保留Storyboard。
+- 已实现0009、后端/API与UI；真实SPF/S13隔离副本完成版本、Selected、预览、刷新、重启、解绑和删除保护验收。真实外部AI保持待明确许可。
+- 自动化前后生产11/11哈希不变；备份与源SHA-256相等后只upgrade到0009。18个旧表逐行不变，integrity=ok、FK=0、生产Storyboard=0。[Phase9状态](docs/PHASE_9_STATUS.md)。
 
 ## Phase 8 范围与最终验收
 
@@ -98,4 +109,4 @@
 
 Phase 2 当时不实现 Asset / Character / Prompt / Storyboard / VideoResult、导出、回收站页面、Chapter / Sequence UI、复杂拖拽。没有更换技术栈或增加依赖。
 
-当前停在 **Phase 8 COMPLETE**。真实外部 AI 调用待用户明确允许。**Phase 9 NOT STARTED，不自动推进。**
+当前停在 **Phase 9 COMPLETE**。真实外部 AI 调用待用户明确允许。**Phase 10 NOT STARTED，不自动推进。**

@@ -2,7 +2,15 @@
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
-**Phase 8 — Prompt Versioning COMPLETE；Phase 9 NOT STARTED。** 支持 Prompt History、人工编辑、Regenerate、采用版本与 Copy。生产 DB 已备份并安全升级到 `0008_prompt_versioning`，18 张旧表数据不变；软件与真实 S13 隔离副本 Fake 验收全部通过。真实外部 AI 仍等待用户明确允许。首次失败与 Recovery 完整证据见 [Phase 8 状态](docs/PHASE_8_STATUS.md)。
+**Phase 9 — Storyboard Workflow COMPLETE；Phase 10 NOT STARTED。** Phase 9 已完成外部六宫格导入、来源 Prompt 关联、整数版本历史与采用，以及独立的 Project / Shot 参考绑定。最终 Backend 专项 **28/28**、Backend full **314/314**、Phase 9 Browser **6/6**、production Browser **62/62**、development Browser **64/64**，lint/build/Ruff 与隔离迁移全部通过。生产已在哈希一致的备份后仅升级至 `0009_storyboards`，18 个 Phase 0–8 旧表逐行不变，`integrity_check=ok`、外键问题为 0，且没有写入假 Storyboard。完整语义、API、三次 Failure-stop 历史与最终证据见 [Phase 9状态](docs/PHASE_9_STATUS.md)。
+
+Recovery 已把首个 locator 精确为 accessible name `Storyboard V1 thumbnail`，四个主题/宽度用例均通过原失败点；完整专项随后在详情原图的另一处宽泛 `getByRole("img")` 同时匹配原图与关闭按钮 Lucide X，最终 **1/6 PASS、5 failed**。按新的 Failure-stop 再次停止，未继续修复或执行后续验收；本次独立生产基线前后仍11/11相等。
+
+Recovery 2把详情原图精确为accessible name `Storyboard V1 original`，Phase9 Browser最终 **6/6 PASS**；Backend专项 **28/28**、全量 **314/314**、lint/build/Ruff再次通过。随后production浏览器全量的两个旧Asset dark/light用例因Phase9把删除提示`请先解除绑定`改成`请先解除引用`而失败，属于旧功能文案回归；按Failure-stop中止，未继续development、迁移、S13或提交。第二次Recovery独立生产哈希仍11/11相等。
+
+Recovery 3从实际错误链路恢复统一兼容文案`请先解除绑定`，保留 Storyboard 引用计数、`ASSET_IN_USE` 与资产分类变更保护。旧 Asset Library dark/light **2/2**、全部回归与真实 SPF S13 隔离副本验收随后通过；自动化前后新建的 production hash baseline **11/11** 相等。生产备份为 `D:\AI-Video-Workspace\backups\before-phase9-20260930-192304.db`，源与备份 SHA-256 均为 `6bcbefa34fd56937a7b315a76a4613bb73b64a73197a23d05b9070d7fc1778c5`。
+
+Phase 8 已完成 Prompt History、人工编辑、Regenerate、采用版本与 Copy。真实外部 AI 仍等待用户明确允许；Phase 8历史验收见 [Phase 8状态](docs/PHASE_8_STATUS.md)。
 
 Shot Workspace → **Version History** 查看各类型整数版本、Selected / Edited、模板和生成来源。**Edit Prompt → Save Prompt** 只保存 `edited_content`，原始 `generated_content` 与快照保持。**Regenerate** 使用来源模板当前内容与最新已保存镜头上下文创建新版本，成功后自动采用；手工 **Select Prompt** 可改用历史版本。同一 Shot / Prompt Type 的版本号唯一，活跃记录最多一个 Selected。
 
@@ -98,7 +106,7 @@ backend/
     schemas/          # Pydantic 请求/响应契约
     repositories/     # BaseRepository + 各业务 Repository，默认忽略软删除记录
     services/         # Workflow / AssetService / Workspace；storage/ Service 与 Provider
-    migrations/       # 0001_app_settings → … → 0007_prompt_generation → 0008_prompt_versioning
+    migrations/       # 0001_app_settings → … → 0008_prompt_versioning → 0009_storyboards
   tests/
 frontend/
   src/

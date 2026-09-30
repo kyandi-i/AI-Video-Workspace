@@ -4,6 +4,7 @@ from app.core.exceptions import AppError
 from app.models.assets import AssetTag, AssetType, ProjectAssetLink, ShotAssetLink, Tag
 from app.models.base import utc_now
 from app.repositories.assets import AssetRepository, TagRepository
+from app.repositories.storyboards import StoryboardRepository
 from app.repositories.workflow import WorkflowRepository
 from app.schemas.assets import AssetDetail, AssetRead, TagRead
 from app.schemas.workflow import ProjectRead, ShotRead
@@ -48,6 +49,7 @@ class AssetService(WorkflowService):
             shots=[ShotRead.model_validate(item) for item in shots],
             characters=characters,
             character_states=states,
+            storyboards=StoryboardRepository(self.session).for_asset(identifier),
         )
 
     @staticmethod
@@ -63,6 +65,12 @@ class AssetService(WorkflowService):
     def update_asset(self, identifier, data):
         asset = self.asset(identifier)
         changes = data.model_dump(exclude_unset=True)
+        if changes.get(
+            "asset_type", asset.asset_type
+        ) != AssetType.STORYBOARD_6GRID and StoryboardRepository(self.session).for_asset(
+            identifier
+        ):
+            raise AppError("ASSET_IN_USE", "资产仍被分镜引用，请先解除绑定后再更改分类。", 409)
         self.validate_type(changes.get("asset_type", asset.asset_type), asset.mime_type)
         self.assets.update(asset, **changes)
         return self.detail(identifier)
@@ -72,16 +80,18 @@ class AssetService(WorkflowService):
         asset = self.asset(identifier)
         projects, shots = self.assets.references(identifier)
         characters, states = self.assets.character_references(identifier)
-        if projects or shots or characters or states:
+        storyboards = StoryboardRepository(self.session).for_asset(identifier)
+        if projects or shots or characters or states or storyboards:
             raise AppError(
                 "ASSET_IN_USE",
-                "资产仍被项目或镜头引用，或被角色 / 角色状态引用，请先解除绑定再删除。",
+                "资产仍被项目或镜头引用，或被角色 / 角色状态 / 分镜引用，请先解除绑定再删除。",
                 409,
                 {
                     "projects": len(projects),
                     "shots": len(shots),
                     "characters": len(characters),
                     "character_states": len(states),
+                    "storyboards": len(storyboards),
                 },
             )
         self.assets.soft_delete(asset)

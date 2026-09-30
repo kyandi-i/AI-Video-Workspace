@@ -2,6 +2,35 @@
 
 更新日期：2026-09-30
 
+**Phase 9 — Storyboard Workflow COMPLETE。Phase 10 NOT STARTED。**
+
+- Recovery 3确认文案回归源于 Phase 9 同时改动 Asset Detail 删除确认与 AssetService 统一错误消息。最终统一恢复既有主提示`请先解除绑定`；Storyboard 引用数量仍在 details / impact list 中，active Storyboard 仍阻止 Asset 删除和改离`STORYBOARD_6GRID`。旧 Asset Library dark/light原失败用例 **2/2 PASS**，没有修改旧 expected。
+- 最终 Phase9 Backend **28/28**、Backend full **314/314**、Phase9 Browser **6/6**、production Browser **62/62**、development Browser **64/64**，均正常 exit 0。Frontend lint/build、Ruff check/format PASS。
+- 独立Alembic CLI完成upgrade → downgrade → upgrade → check → current，目标`0009_storyboards`；populated migration完成0008 → 0009 → 0008 → 0009并保持Phase0–8数据。
+- Recovery 3自己的自动化前后生产保护文件 **11/11 SHA-256相同**。真实SPF/S13隔离副本通过V1/V2、Selected切换、刷新、独立后端重启、thumbnail/original、Shot reference解绑、Storyboard删除独立生命周期和Asset删除保护验收。
+- 生产备份`D:\AI-Video-Workspace\backups\before-phase9-20260930-192304.db`与源库SHA-256均为`6bcbefa34fd56937a7b315a76a4613bb73b64a73197a23d05b9070d7fc1778c5`；之后只执行upgrade至`0009_storyboards`。18个Phase0–8旧表逐行不变，integrity=ok、FK=0，生产Storyboard=0，无Fake记录。
+- 真实外部AI未调用，仍为 **PENDING USER EXPLICIT APPROVAL**。用户原有`HANDOFF.md`未编辑、恢复、暂存或提交；Phase10保持未开始。完整schema、关系语义、三次Failure-stop历史与证据见 [Phase9状态](docs/PHASE_9_STATUS.md)。
+
+以下保留 Phase 9 的三次 Failure-stop / recovery 历史；最终状态以上述 Recovery 3 为准。
+
+- Recovery确认首个失败纯属locator歧义；History缩略图已有`Storyboard V1 thumbnail`可访问名称，只精确修改browser test。四个主题/宽度均通过原失败点及V2/切换/刷新步骤。
+- 完整专项随后在详情原图的另一处宽泛`detail.getByRole("img")`失败：同时匹配`Storyboard V1 original`和关闭按钮Lucide X。最终 **1/6 PASS、5 failed，exit 1**；按本轮“Browser still fails”停止，未继续修复或重跑。
+- 本次Recovery未执行后续Backend重跑、full browser、独立Alembic CLI、S13或生产迁移。上一轮已通过的Backend 28/28、full 314/314、lint/build/Ruff事实保留，但不冒充Recovery最终重跑。
+- Recovery自己的生产哈希基线前后 **11/11相同**；生产仍0008，无假记录、无备份或迁移。HANDOFF哈希仍为`C42D15FF…763A25`。
+
+- Recovery 2只把详情原图locator精确为`Storyboard V1 original`；Phase9 Browser **6/6 PASS**。最终Backend专项 **28/28**、full **314/314**、lint/build/Ruff均PASS。
+- Production Browser full发现62项，但两个既有Asset Library dark/light用例因Phase9删除确认文案由`请先解除绑定`变为`请先解除引用`而失败。这是旧功能回归，不是locator；立即中止时 **6 passed、2 failed、54未运行**。未修改旧expected，development full未运行。
+- 因Failure-stop，独立Alembic CLI、S13/reference unlink隔离验收、production backup/upgrade和commit均未执行。Recovery 2自己的生产hash前后仍 **11/11相同**。
+
+- 用户冻结 Storyboard / ProjectAssetLink / ShotAssetLink 独立生命周期。新增0009、Storyboard model/Repository/Service/API、复用Storage导入事务、版本和采用、来源Prompt、Asset in-use/改类型保护及Shot Workspace界面；未进入Phase10。
+- Backend专项 **28/28 PASS**，全量 **314/314 PASS**；Frontend lint/build、Ruff check/format PASS。
+- 首次Browser专项 **0/6 PASS：1 failed、1 interrupted、4 did not run，exit 1**。新测试 `v1.getByRole("img")` 同时匹配缩略图与3个Lucide SVG，strict mode失败；未执行尺寸断言。按Failure-stop停止，未改定位器重跑。
+- Browser production/development全量、独立Alembic CLI、真实S13隔离副本验收未执行；pytest迁移与populated migration通过。
+- 自动化前后生产9文件 + Bootstrap/HANDOFF **11/11哈希相同**；生产仍0008，无Phase9备份/生产升级，无假生产素材/记录，无真实AI调用。
+- Phase9代码未暂存、未提交；用户原有HANDOFF修改哈希不变。完整当前模型、API、文件、证据及待办见 [Phase9状态](docs/PHASE_9_STATUS.md)。
+
+以下为此前阶段历史。
+
 **Phase 8 — Prompt Versioning COMPLETE。Phase 9 NOT STARTED。**
 
 - Recovery 证明 Copy 的唯一区别是 Windows Clipboard API 将 LF 表示为 CRLF；数据库、effective content、DOM textContent、writeText 入参逐字一致。仅浏览器断言规范 `\r\n → \n`，不 trim、不折叠空白，保留中文/标点/首尾空格/空行/末尾换行。

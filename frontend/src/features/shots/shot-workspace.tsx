@@ -37,6 +37,7 @@ import { WorkspaceCharacters } from "./workspace-characters";
 import { WorkspaceReferences } from "./workspace-references";
 import "./shot-workspace.css";
 import { PromptPanel } from "@/features/prompts/prompt-panel";
+import { StoryboardPanel } from "@/features/storyboards/storyboard-panel";
 
 interface Workspace {
   shot: Shot;
@@ -71,6 +72,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
   const [values, setValues] = useState(() => formValues(shot));
   const [saved, setSaved] = useState(() => formValues(shot));
   const [promptProtected, setPromptProtected] = useState(false);
+  const [storyboardBusy, setStoryboardBusy] = useState(false);
   const busy = useRef(false);
   const dirty = JSON.stringify(values) !== JSON.stringify(saved);
   const client = useQueryClient();
@@ -105,16 +107,18 @@ function WorkspaceContent({ data }: { data: Workspace }) {
       ]);
     },
   });
-  const blocker = useBlocker(dirty || save.isPending || promptProtected);
+  const blocker = useBlocker(
+    dirty || save.isPending || promptProtected || storyboardBusy,
+  );
   useBeforeUnload(
     useCallback(
       (event) => {
-        if (dirty || busy.current || promptProtected) {
+        if (dirty || busy.current || promptProtected || storyboardBusy) {
           event.preventDefault();
           event.returnValue = "";
         }
       },
-      [dirty, promptProtected],
+      [dirty, promptProtected, storyboardBusy],
     ),
   );
   const set = (key: keyof typeof values, value: string) =>
@@ -316,6 +320,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
         promptProtected={promptProtected}
         onProtectedChange={setPromptProtected}
       />
+      <StoryboardPanel shotId={shot.id} onBusyChange={setStoryboardBusy} />
       <WorkspacePanel
         title="Production Status"
         metadata={<StatusBadge status={shot.status} />}

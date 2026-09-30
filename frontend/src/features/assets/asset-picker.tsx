@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { useAssets } from "./hooks";
 import { assetApi } from "./api";
 import { assetTypeOptions, assetDisplay } from "./display";
-import type { Asset } from "./types";
+import type { Asset, AssetType } from "./types";
 
 function PickerContent({
   bound,
@@ -26,12 +26,14 @@ function PickerContent({
   close,
   pending,
   setPending,
+  assetType,
 }: {
   bound: Asset[];
   onConfirm: (id: string) => Promise<unknown>;
   close: () => void;
   pending: boolean;
   setPending: (v: boolean) => void;
+  assetType?: AssetType;
 }) {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
@@ -40,7 +42,11 @@ function PickerContent({
   const busy = useRef(false);
   const query = useAssets({
     search,
-    ...(type === "all" ? {} : { asset_type: type }),
+    ...(assetType
+      ? { asset_type: assetType }
+      : type === "all"
+        ? {}
+        : { asset_type: type }),
   });
   const assets = query.data?.pages.flat() ?? [];
   return (
@@ -57,9 +63,9 @@ function PickerContent({
           />
           <Choice
             label="选择资产类型"
-            value={type}
+            value={assetType ?? type}
             onChange={setType}
-            disabled={pending}
+            disabled={pending || Boolean(assetType)}
             options={[
               { value: "all", label: "All types" },
               ...assetTypeOptions,
@@ -154,9 +160,15 @@ function PickerContent({
 export function AssetPicker({
   bound,
   onConfirm,
+  assetType,
+  label = "Bind Asset",
+  disabled = false,
 }: {
   bound: Asset[];
   onConfirm: (id: string) => Promise<unknown>;
+  assetType?: AssetType;
+  label?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -168,7 +180,9 @@ export function AssetPicker({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="secondary">Bind Asset</Button>
+        <Button variant="secondary" disabled={disabled}>
+          {label}
+        </Button>
       </DialogTrigger>
       <DialogContent
         className="entity-dialog asset-picker"
@@ -187,6 +201,7 @@ export function AssetPicker({
           close={() => setOpen(false)}
           pending={pending}
           setPending={setPending}
+          assetType={assetType}
         />
       </DialogContent>
     </Dialog>

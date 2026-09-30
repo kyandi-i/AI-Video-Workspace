@@ -26,6 +26,7 @@ def test_migration_upgrade_downgrade_and_autogenerate(tmp_path):
             config.attributes["connection"] = connection
             command.upgrade(config, "head")
             assert set(inspect(connection).get_table_names()) == {
+                "storyboards",
                 "prompt_records",
                 "prompt_templates",
                 "characters",
@@ -53,13 +54,13 @@ def test_migration_upgrade_downgrade_and_autogenerate(tmp_path):
             }
             assert (
                 connection.scalar(text("select version_num from alembic_version"))
-                == "0008_prompt_versioning"
+                == "0009_storyboards"
             )
             command.check(config)
             revision = command.revision(
                 config, message="test metadata discovery", autogenerate=True
             )
-            assert revision.down_revision == "0008_prompt_versioning"
+            assert revision.down_revision == "0009_storyboards"
             command.upgrade(config, "head")
             command.downgrade(config, "base")
             assert "app_settings" not in inspect(connection).get_table_names()

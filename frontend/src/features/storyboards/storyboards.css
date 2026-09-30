@@ -1,0 +1,67 @@
+.storyboard-panel {
+  min-width: 0;
+}
+.storyboard-import {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.storyboard-import.is-dragging {
+  outline: 2px solid var(--primary);
+}
+.storyboard-current {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 12px 0 20px;
+}
+.storyboard-current img {
+  width: 240px;
+  max-width: 100%;
+  height: 150px;
+  object-fit: contain;
+}
+.storyboard-current > div {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.storyboard-history {
+  display: grid;
+  gap: 10px;
+}
+.storyboard-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.storyboard-row > img {
+  width: 100px;
+  height: 70px;
+  object-fit: contain;
+}
+.storyboard-meta {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 180px;
+  overflow-wrap: anywhere;
+}
+.storyboard-meta .badge {
+  width: fit-content;
+}
+.storyboard-preview {
+  width: min(1000px, 94vw);
+  max-width: 1000px;
+}
+.storyboard-preview > img {
+  width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+}

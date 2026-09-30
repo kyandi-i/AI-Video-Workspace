@@ -19,7 +19,7 @@ class StorageService:
         with self.workspace.resources() as (_, storage):
             return storage
 
-    async def upload(self, chunks, filename, asset_type=None):
+    async def upload(self, chunks, filename, asset_type=None, *, storyboard=None):
         # Stream directly into this workspace's temp directory, never framework/system temp.
         filename = filename.replace("\\", "/").split("/")[-1].strip()
         if not filename or len(filename) > 255 or any(ord(c) < 32 for c in filename):
@@ -38,9 +38,11 @@ class StorageService:
             output.close()
             if not size:
                 raise AppError("EMPTY_FILE", "不能导入空文件。", 422)
-            return await run_in_threadpool(self.import_staged, storage, key, filename, asset_type)
+            return await run_in_threadpool(
+                self.import_staged, storage, key, filename, asset_type, storyboard=storyboard
+            )
 
-    def import_staged(self, staging, key, filename, asset_type=None):
+    def import_staged(self, staging, key, filename, asset_type=None, *, storyboard=None):
         with self.workspace.resources() as (database, storage):
             source = staging.get_absolute_path(key)
             if storage.get_absolute_path(key) != source:
@@ -71,7 +73,19 @@ class StorageService:
                             duration_seconds=info.duration_seconds,
                         )
                     )
-                    result = AssetService(session).detail(entity.id)
+                    if storyboard is None:
+                        result = AssetService(session).detail(entity.id)
+                    else:
+                        from app.schemas.storyboards import StoryboardCreate
+                        from app.services.storyboards import StoryboardService
+
+                        shot_id, source_id, notes = storyboard
+                        result = StoryboardService(session).create(
+                            shot_id,
+                            StoryboardCreate(
+                                asset_id=entity.id, source_prompt_record_id=source_id, notes=notes
+                            ),
+                        )
                 return result
             except BaseException:
                 if thumbnail:

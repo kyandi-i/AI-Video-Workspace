@@ -87,9 +87,10 @@ function Content({ asset, close }: { asset: AssetDetail; close: () => void }) {
             asset.projects.length +
               asset.shots.length +
               asset.characters.length +
-              asset.character_states.length >
+              asset.character_states.length +
+              asset.storyboards.length >
             0
-              ? `仍有 ${asset.projects.length} 个项目、${asset.shots.length} 个镜头、${asset.characters.length} 个角色、${asset.character_states.length} 个状态引用，请先解除绑定。`
+              ? `仍有 ${asset.projects.length} 个项目、${asset.shots.length} 个镜头、${asset.characters.length} 个角色、${asset.character_states.length} 个状态和 ${asset.storyboards.length} 个分镜引用，请先解除绑定。`
               : "原文件与缩略图会保留，不会永久删除。"
           }
           onDelete={async () => {
@@ -119,6 +120,20 @@ function Content({ asset, close }: { asset: AssetDetail; close: () => void }) {
         <dt>更新时间</dt>
         <dd>{new Date(asset.updated_at).toLocaleString()}</dd>
       </dl>
+      <section className="asset-detail-section">
+        <h3>Storyboards using this asset</h3>
+        {!asset.storyboards.length && <p>尚无分镜引用</p>}
+        {asset.storyboards.map((item) => (
+          <Link
+            key={item.id}
+            className="back-link"
+            to={`/shots/${item.shot_id}/workspace`}
+          >
+            Storyboard V{item.version}
+            {item.is_selected ? " · Selected" : ""} →
+          </Link>
+        ))}
+      </section>
       <section className="asset-detail-section">
         <h3>Characters / States using this asset</h3>
         {!asset.characters.length && !asset.character_states.length && (

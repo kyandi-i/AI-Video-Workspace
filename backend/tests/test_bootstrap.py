@@ -50,8 +50,9 @@ def test_missing_frontend_has_actionable_error(tmp_path):
 
 def test_phase7_has_only_authorized_business_schema():
     config = Config(str(REPOSITORY_ROOT / "backend" / "alembic.ini"))
-    assert ScriptDirectory.from_config(config).get_heads() == ["0009_storyboards"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["0010_video_results"]
     assert set(Base.metadata.tables) == {
+        "video_results",
         "storyboards",
         "prompt_records",
         "prompt_templates",

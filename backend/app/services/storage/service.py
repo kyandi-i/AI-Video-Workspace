@@ -19,7 +19,9 @@ class StorageService:
         with self.workspace.resources() as (_, storage):
             return storage
 
-    async def upload(self, chunks, filename, asset_type=None, *, storyboard=None):
+    async def upload(
+        self, chunks, filename, asset_type=None, *, storyboard=None, create_result=None
+    ):
         # Stream directly into this workspace's temp directory, never framework/system temp.
         filename = filename.replace("\\", "/").split("/")[-1].strip()
         if not filename or len(filename) > 255 or any(ord(c) < 32 for c in filename):
@@ -39,10 +41,18 @@ class StorageService:
             if not size:
                 raise AppError("EMPTY_FILE", "不能导入空文件。", 422)
             return await run_in_threadpool(
-                self.import_staged, storage, key, filename, asset_type, storyboard=storyboard
+                self.import_staged,
+                storage,
+                key,
+                filename,
+                asset_type,
+                storyboard=storyboard,
+                create_result=create_result,
             )
 
-    def import_staged(self, staging, key, filename, asset_type=None, *, storyboard=None):
+    def import_staged(
+        self, staging, key, filename, asset_type=None, *, storyboard=None, create_result=None
+    ):
         with self.workspace.resources() as (database, storage):
             source = staging.get_absolute_path(key)
             if storage.get_absolute_path(key) != source:
@@ -73,7 +83,9 @@ class StorageService:
                             duration_seconds=info.duration_seconds,
                         )
                     )
-                    if storyboard is None:
+                    if create_result is not None:
+                        result = create_result(session, entity.id)
+                    elif storyboard is None:
                         result = AssetService(session).detail(entity.id)
                     else:
                         from app.schemas.storyboards import StoryboardCreate

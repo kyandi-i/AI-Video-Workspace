@@ -1,5 +1,9 @@
 # AI Video Workspace
 
+Video Result workflow：在 Shot Workspace 导入视频或复用已有 VIDEO Asset，管理 V1/V2 历史、采用版本、备注及独立的 Storyboard / Prompt 来源；支持按需播放、软删除与恢复。结果删除不会删除视频或参考绑定。
+
+开发状态：Phase 10 COMPLETE；Phase 11 NOT STARTED。生产 schema 为 `0010_video_results`，完整回归、独立进程重启与生产迁移验证通过。测试和备份记录见 [Phase 10 状态](docs/PHASE_10_STATUS.md)。以下 Phase 9 内容为历史基线。
+
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 
 **Phase 9 — Storyboard Workflow COMPLETE；Phase 10 NOT STARTED。** Phase 9 已完成外部六宫格导入、来源 Prompt 关联、整数版本历史与采用，以及独立的 Project / Shot 参考绑定。最终 Backend 专项 **28/28**、Backend full **314/314**、Phase 9 Browser **6/6**、production Browser **62/62**、development Browser **64/64**，lint/build/Ruff 与隔离迁移全部通过。生产已在哈希一致的备份后仅升级至 `0009_storyboards`，18 个 Phase 0–8 旧表逐行不变，`integrity_check=ok`、外键问题为 0，且没有写入假 Storyboard。完整语义、API、三次 Failure-stop 历史与最终证据见 [Phase 9状态](docs/PHASE_9_STATUS.md)。

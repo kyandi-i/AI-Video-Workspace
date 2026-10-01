@@ -5,6 +5,7 @@ from app.models.assets import AssetTag, AssetType, ProjectAssetLink, ShotAssetLi
 from app.models.base import utc_now
 from app.repositories.assets import AssetRepository, TagRepository
 from app.repositories.storyboards import StoryboardRepository
+from app.repositories.video_results import VideoResultRepository
 from app.repositories.workflow import WorkflowRepository
 from app.schemas.assets import AssetDetail, AssetRead, TagRead
 from app.schemas.workflow import ProjectRead, ShotRead
@@ -50,6 +51,7 @@ class AssetService(WorkflowService):
             characters=characters,
             character_states=states,
             storyboards=StoryboardRepository(self.session).for_asset(identifier),
+            video_results=VideoResultRepository(self.session).for_asset(identifier),
         )
 
     @staticmethod
@@ -65,6 +67,10 @@ class AssetService(WorkflowService):
     def update_asset(self, identifier, data):
         asset = self.asset(identifier)
         changes = data.model_dump(exclude_unset=True)
+        if changes.get("asset_type", asset.asset_type) != AssetType.VIDEO and VideoResultRepository(
+            self.session
+        ).for_asset(identifier):
+            raise AppError("ASSET_IN_USE", "资产仍被视频结果引用，请先解除绑定后再更改分类。", 409)
         if changes.get(
             "asset_type", asset.asset_type
         ) != AssetType.STORYBOARD_6GRID and StoryboardRepository(self.session).for_asset(
@@ -81,7 +87,8 @@ class AssetService(WorkflowService):
         projects, shots = self.assets.references(identifier)
         characters, states = self.assets.character_references(identifier)
         storyboards = StoryboardRepository(self.session).for_asset(identifier)
-        if projects or shots or characters or states or storyboards:
+        video_results = VideoResultRepository(self.session).for_asset(identifier)
+        if projects or shots or characters or states or storyboards or video_results:
             raise AppError(
                 "ASSET_IN_USE",
                 "资产仍被项目或镜头引用，或被角色 / 角色状态 / 分镜引用，请先解除绑定再删除。",
@@ -92,6 +99,7 @@ class AssetService(WorkflowService):
                     "characters": len(characters),
                     "character_states": len(states),
                     "storyboards": len(storyboards),
+                    "video_results": len(video_results),
                 },
             )
         self.assets.soft_delete(asset)

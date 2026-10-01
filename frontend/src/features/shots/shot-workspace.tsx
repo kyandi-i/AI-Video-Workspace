@@ -38,6 +38,7 @@ import { WorkspaceReferences } from "./workspace-references";
 import "./shot-workspace.css";
 import { PromptPanel } from "@/features/prompts/prompt-panel";
 import { StoryboardPanel } from "@/features/storyboards/storyboard-panel";
+import { VideoPanel } from "@/features/video-results/video-panel";
 
 interface Workspace {
   shot: Shot;
@@ -73,6 +74,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
   const [saved, setSaved] = useState(() => formValues(shot));
   const [promptProtected, setPromptProtected] = useState(false);
   const [storyboardBusy, setStoryboardBusy] = useState(false);
+  const [videoBusy, setVideoBusy] = useState(false);
   const busy = useRef(false);
   const dirty = JSON.stringify(values) !== JSON.stringify(saved);
   const client = useQueryClient();
@@ -108,17 +110,17 @@ function WorkspaceContent({ data }: { data: Workspace }) {
     },
   });
   const blocker = useBlocker(
-    dirty || save.isPending || promptProtected || storyboardBusy,
+    dirty || save.isPending || promptProtected || storyboardBusy || videoBusy,
   );
   useBeforeUnload(
     useCallback(
       (event) => {
-        if (dirty || busy.current || promptProtected || storyboardBusy) {
+        if (dirty || busy.current || promptProtected || storyboardBusy || videoBusy) {
           event.preventDefault();
           event.returnValue = "";
         }
       },
-      [dirty, promptProtected, storyboardBusy],
+      [dirty, promptProtected, storyboardBusy, videoBusy],
     ),
   );
   const set = (key: keyof typeof values, value: string) =>
@@ -321,6 +323,7 @@ function WorkspaceContent({ data }: { data: Workspace }) {
         onProtectedChange={setPromptProtected}
       />
       <StoryboardPanel shotId={shot.id} onBusyChange={setStoryboardBusy} />
+      <VideoPanel shotId={shot.id} onBusyChange={setVideoBusy} />
       <WorkspacePanel
         title="Production Status"
         metadata={<StatusBadge status={shot.status} />}

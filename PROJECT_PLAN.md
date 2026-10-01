@@ -1,5 +1,13 @@
 # 项目计划索引
 
+## Phase 10 ✅ — Video Result / COMPLETE
+
+独立 VideoResult → Asset(VIDEO)、双 nullable 同 Shot provenance、per-Shot 正整数版本不复用、创建自动采用、删除不 fallback、恢复不采用以及独立 Link 生命周期均已完成。后端/UI/完整回归、真实生产隔离副本独立进程重启通过；哈希一致备份后只升级生产至 0010，19 个旧表逐行不变，integrity=ok、FK=0。完整证据见 [Phase 10 状态](docs/PHASE_10_STATUS.md)。
+
+Phase 11 ⬜ — NOT STARTED。等待用户明确授权，不开始 Export 或全局 Recycle Bin 收尾。
+
+以下为 Phase 0–9 历史计划与验收。
+
 当前开发阶段：**Phase 9 — Storyboard Workflow COMPLETE；Phase 10 NOT STARTED。**
 
 ## Phase 9 范围与最终验收

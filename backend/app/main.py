@@ -11,6 +11,7 @@ from app.api.routes.prompts import router as prompts_router
 from app.api.routes.settings import router as settings_router
 from app.api.routes.storyboards import router as storyboards_router
 from app.api.routes.templates import router as templates_router
+from app.api.routes.video_results import router as video_results_router
 from app.api.routes.workflow import router as workflow_router
 from app.core.config import Settings
 from app.core.exceptions import register_exception_handlers
@@ -53,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(templates_router, prefix="/api")
     app.include_router(prompts_router, prefix="/api")
     app.include_router(storyboards_router, prefix="/api")
+    app.include_router(video_results_router, prefix="/api")
 
     dist = settings.frontend_dist.resolve()
 

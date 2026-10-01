@@ -54,6 +54,7 @@ class StoryboardReference(Read):
 
 
 class AssetDetail(AssetRead):
+    video_results: list[StoryboardReference] = []
     projects: list[ProjectRead] = []
     shots: list[ShotRead] = []
     characters: list[CharacterReference] = []

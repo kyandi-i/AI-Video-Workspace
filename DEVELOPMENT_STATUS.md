@@ -1,5 +1,13 @@
 # 开发状态
 
+## 2026-10-01 — Phase 10 COMPLETE / Phase 11 NOT STARTED
+
+VideoResult 后端/0010 migration/双 nullable 来源/VIDEO 导入及复用/版本采用/软删除恢复/Asset 保护/Shot Workspace UI 已实现。Phase10 backend 28/28、full backend 342/342、Phase10 browser 5/5、production browser 67/67、development browser 69/69、lint/build/Ruff、独立 CLI 与 populated migration 全部 PASS。生产及 HANDOFF 12/12 哈希一致，旧测试截图已恢复。
+
+独立进程重启恢复验收 PASS：PID 31584 / 30148 均 exit 0，业务持久化与清理通过，生产保护哈希 12/12 不变。Ruff check/format PASS（106 files）。本轮仅文档收尾及生产迁移，既有完整回归证据继续有效。
+
+生产备份 `D:\AI-Video-Workspace\backups\before-phase10-20261001-161901.db` 与迁移前源 SHA-256 均为 `54da9298e132c8857763ba8761073111895167f329bf6b187ad179145c0df64c`。只执行 upgrade 至 `0010_video_results`；19 个旧表完整行/字段一致，integrity=ok、FK=0、VideoResult=0，无 Fake 数据。初次脚本拒绝及后续 SQLite 连接未关闭导致的 cleanup failure 均保留在 [Phase 10 状态](docs/PHASE_10_STATUS.md)；恢复已通过。以下为历史记录。
+
 更新日期：2026-09-30
 
 **Phase 9 — Storyboard Workflow COMPLETE。Phase 10 NOT STARTED。**

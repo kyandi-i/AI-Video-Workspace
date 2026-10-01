@@ -25,6 +25,7 @@ export interface Asset extends Entity {
   tags: Tag[];
 }
 export interface AssetDetail extends Asset {
+  video_results: (Entity & { shot_id: string; version: number; is_selected: boolean })[];
   storyboards: (Entity & {
     shot_id: string;
     version: number;

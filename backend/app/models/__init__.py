@@ -13,9 +13,11 @@ from app.models.characters import (
 from app.models.prompts import PromptRecord
 from app.models.storyboards import Storyboard
 from app.models.templates import PromptTemplate
+from app.models.video_results import VideoResult
 from app.models.workflow import Project, Scene, Script, ScriptNode, Shot
 
 __all__ = [
+    "VideoResult",
     "Storyboard",
     "PromptRecord",
     "PromptTemplate",

@@ -1,10 +1,18 @@
 # 项目计划索引
 
+## Phase 11 ✅ — Project Export / Unified Recycle Bin / COMPLETE
+
+已完成active-only项目ZIP（metadata / snapshots /实际引用媒体/版本化manifest）与统一10类Recycle Bin及既有Restore。GLOBAL模板实体不导出，PromptRecord历史快照保留；永久删除与Project Import均OUT。无migration，生产schema仍0010。
+
+Backend20/20、full362/362；Browser5/5、prod72/72、dev74/74；lint/build/Ruff、4个下载ZIP、9/9导出安全验证通过。全新生产派生副本保留真实SPF graph及IMAGE，以显式synthetic Prompt/Storyboard/Video补齐双来源链路；验收和清理通过，生产13/13哈希一致、三类生成事实仍0，HANDOFF未提交。[最终验收与限制](docs/PHASE_11_STATUS.md)。完成后STOP，不自动开启后续阶段。
+
+以下Phase 0–10内容为历史计划。
+
 ## Phase 10 ✅ — Video Result / COMPLETE
 
 独立 VideoResult → Asset(VIDEO)、双 nullable 同 Shot provenance、per-Shot 正整数版本不复用、创建自动采用、删除不 fallback、恢复不采用以及独立 Link 生命周期均已完成。后端/UI/完整回归、真实生产隔离副本独立进程重启通过；哈希一致备份后只升级生产至 0010，19 个旧表逐行不变，integrity=ok、FK=0。完整证据见 [Phase 10 状态](docs/PHASE_10_STATUS.md)。
 
-Phase 11 ⬜ — NOT STARTED。等待用户明确授权，不开始 Export 或全局 Recycle Bin 收尾。
+Phase 11已按用户冻结范围完成；详见上方当前状态。
 
 以下为 Phase 0–9 历史计划与验收。
 

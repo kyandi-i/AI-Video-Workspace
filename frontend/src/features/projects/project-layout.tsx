@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { QueryState, QueryErrors } from "@/components/common/query-state";
 import { ProjectEditor } from "./project-editor";
 import { useProject } from "./hooks";
+import { ProjectExport } from "./project-export";
 
 export function Component() {
   const { projectId = "" } = useParams();
@@ -21,7 +22,7 @@ export function Component() {
         title={project.data.name}
         description={project.data.description || "项目工作空间"}
         metadata={<StatusBadge status={project.data.status} />}
-        actions={<ProjectEditor project={project.data} />}
+        actions={<><ProjectExport key={projectId} projectId={projectId} /><ProjectEditor project={project.data} /></>}
       />
       <nav className="project-tabs" aria-label="项目导航">
         {[

@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes.assets import router as assets_router
 from app.api.routes.characters import router as characters_router
 from app.api.routes.health import router as health_router
+from app.api.routes.project_tools import router as project_tools_router
 from app.api.routes.prompts import router as prompts_router
 from app.api.routes.settings import router as settings_router
 from app.api.routes.storyboards import router as storyboards_router
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(prompts_router, prefix="/api")
     app.include_router(storyboards_router, prefix="/api")
     app.include_router(video_results_router, prefix="/api")
+    app.include_router(project_tools_router, prefix="/api")
 
     dist = settings.frontend_dist.resolve()
 

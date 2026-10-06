@@ -1,8 +1,12 @@
 # AI Video Workspace
 
+Phase 11 — Export / Recycle Bin 已完成验证。进入 Project → **Export Project**，打包完成后点击 **Download ZIP**；只导出当前项目 active graph 与实际引用媒体。PROJECT 模板实体包含在内，GLOBAL 模板只保留 PromptRecord 中的历史快照。侧栏 **Recycle Bin** 可按类型 / 名称筛选并 Restore，复用原有恢复规则；不支持永久删除或 Project Import。
+
+Backend 20/20、full 362/362；Browser 专项5/5、production 72/72、development 74/74；lint/build/Ruff、实际 ZIP 与安全验收、真实生产派生隔离副本补充验收均通过。**无 migration，生产仍为 `0010_video_results`，13/13 保护哈希不变。** 副本中的 Prompt / Storyboard / VideoResult 为明确的 synthetic acceptance data，不是生产原有记录；生产三类记录仍为0。完整导出 contract、恢复矩阵、限制与验收见 [Phase 11 状态](docs/PHASE_11_STATUS.md)。[Scope Freeze](docs/PHASE_11_SCOPE_FREEZE.md) 保留为历史审计，不再代表待决状态。
+
 Video Result workflow：在 Shot Workspace 导入视频或复用已有 VIDEO Asset，管理 V1/V2 历史、采用版本、备注及独立的 Storyboard / Prompt 来源；支持按需播放、软删除与恢复。结果删除不会删除视频或参考绑定。
 
-开发状态：Phase 10 COMPLETE；Phase 11 NOT STARTED。生产 schema 为 `0010_video_results`，完整回归、独立进程重启与生产迁移验证通过。测试和备份记录见 [Phase 10 状态](docs/PHASE_10_STATUS.md)。以下 Phase 9 内容为历史基线。
+开发状态：Phase 11 COMPLETE。Phase 10 的测试和备份记录见 [Phase 10 状态](docs/PHASE_10_STATUS.md)。以下 Phase 0–10 内容为历史基线，不覆盖上方当前状态。
 
 本地优先的 AI 视频制作工作台。需求来源为 [MVP v0.1 开发规格](<AI Video Workspace · MVP v0.1 开发规格.md>)。
 

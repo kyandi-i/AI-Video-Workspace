@@ -13,6 +13,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <DashboardPage /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/recycle-bin", lazy: () => import("@/features/recycle-bin/recycle-bin-page") },
       {
         path: "/prompt-templates",
         lazy: () => import("@/features/templates/templates-page"),

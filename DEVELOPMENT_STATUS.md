@@ -1,5 +1,23 @@
 # 开发状态
 
+## 2026-10-06 — Phase 11 COMPLETE
+
+Project Export 与统一 Recycle Bin 完成。active-only、PROJECT 模板实体 / GLOBAL 模板快照、原始 UUID / 版本 / Selected / provenance、按 Asset UUID 去重的实际媒体 ZIP；统一10类实体筛选与既有 Restore，不增加永久删除或 Import。无新依赖，无 migration，生产仍 `0010_video_results`。
+
+验证链：Backend 专项20/20、full362/362；Browser专项5/5、production72/72、development74/74，均exit0。lint/build、Ruff check/format（115 files）、4个实际下载ZIP、9/9导出安全专项通过。业务代码在两轮test-only recovery中均未改变，因此按用户授权沿用既有自动化证据，未重复全量运行。
+
+真实派生隔离验收：全新副本中的SPF、1 Script / 3 Scene / 4 Shot / 1 Character / 6 State及全部原有行保持；真实IMAGE（15,787,864 bytes）经仅副本新增Project/Shot绑定后导出，与源逐字节及SHA-256一致，未改类型。额外2条Prompt（Storyboard/Video独立类型）、1 Storyboard、1 VideoResult、2媒体及绑定均明确为acceptance-only synthetic facts，通过正式API和FakeAIProvider创建。双来源、版本/Selected、快照、GLOBAL实体排除、软删除排除、恢复、安全及完整性通过。
+
+本轮副本、Bootstrap、ZIP、测试媒体已清理，进程/连接关闭；生产、Bootstrap、HANDOFF前后13/13哈希一致，生产Prompt/Storyboard/VideoResult仍0/0/0。5张此前Browser重写的旧截图已恢复。HANDOFF保持用户原有修改且不提交。完整contract、恢复矩阵、历史停止与限制见 [Phase 11状态](docs/PHASE_11_STATUS.md)。完成后停止，不自动进入新Phase。
+
+以下为历史状态；Scope Freeze待决项已由用户全部冻结。
+
+## 2026-10-04 — Phase 11 Audit / Scope Freeze STOPPED — USER DECISION REQUIRED
+
+已完成 Phase 11 只读审计：确认 HEAD 为 `013ae712ddff1058acd259c5353949f1db06bd27`、Production 为 `0010_video_results`，`integrity_check=ok`、FK=0；现有 schema 足以支持 Project Export 与 Recycle Bin 聚合，不需要预先创建 `0011`。本轮没有实现 Export、ZIP、Recycle Bin UI 或 Permanent Delete，也没有修改 Production / HANDOFF。
+
+当前必须由用户决定：Export 是否包含 soft-deleted records、Global PromptTemplate 是否额外导出实体、Recycle Bin 采用统一聚合 UI 还是仅补现有恢复 UX、Permanent Delete 是否属于 Phase 11。完整边界、ZIP contract 提案、删除恢复矩阵、UX 范围和测试计划见 [Phase 11 Scope Freeze](docs/PHASE_11_SCOPE_FREEZE.md)。
+
 ## 2026-10-01 — Phase 10 COMPLETE / Phase 11 NOT STARTED
 
 VideoResult 后端/0010 migration/双 nullable 来源/VIDEO 导入及复用/版本采用/软删除恢复/Asset 保护/Shot Workspace UI 已实现。Phase10 backend 28/28、full backend 342/342、Phase10 browser 5/5、production browser 67/67、development browser 69/69、lint/build/Ruff、独立 CLI 与 populated migration 全部 PASS。生产及 HANDOFF 12/12 哈希一致，旧测试截图已恢复。

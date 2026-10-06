@@ -10,6 +10,7 @@ import {
   Moon,
   Sun,
   CircleHelp,
+  Trash2,
 } from "lucide-react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,9 @@ export function AppShell() {
         </div>
         <span className="nav-label">WORKSPACE</span>
         <nav aria-label="主导航">
+          <NavLink to="/recycle-bin" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+            <Trash2 size={17} /><span>Recycle Bin</span>
+          </NavLink>
           <NavLink
             to="/"
             end
